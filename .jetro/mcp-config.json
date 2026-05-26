@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "jetro": {
+      "command": "/Users/swapnilkarale/.jetro/runtime/node-darwin-arm64",
+      "args": [
+        "/Users/swapnilkarale/.jetro/mcp-server/index.js"
+      ],
+      "env": {
+        "JET_WORKSPACE": "/Users/swapnilkarale/Desktop/mini-lms",
+        "JET_API_URL": "https://api.jetro.ai",
+        "JET_JWT": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImM5YTBjMWRlYWEyN2JjNjMyNTUzYmM4MWEyMmQ4NzY1MWM3MTMyY2IiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vamV0cm8tY2RhZWYiLCJhdWQiOiJqZXRyby1jZGFlZiIsImF1dGhfdGltZSI6MTc3OTE4MDM2NywidXNlcl9pZCI6IjRRVjVSODVXamVhd3Z2NnUwNmNmUThrYVA4NTMiLCJzdWIiOiI0UVY1Ujg1V2plYXd2djZ1MDZjZlE4a2FQODUzIiwiaWF0IjoxNzc5Nzg0MTI1LCJleHAiOjE3Nzk3ODc3MjUsImVtYWlsIjoic3JlZWFpc3dhcnZlbmdhbGF0aG9kaUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJzcmVlYWlzd2FydmVuZ2FsYXRob2RpQGdtYWlsLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.4HhsUeojDcfVkH03V2q5KYqDk67bXZp_OoQRbcSQyof_juBkljTs8GepHwkkrpwR70cJyybJoBbDNmnaLumEX8Ss8pq44TLTI8l03-FxiMOoOW3IVeDp5bFdd6KCdOElz9SWTfub4LZnyTs5zUDr4BsvyVkVfjYNwtGAYVQnbbUNBQT39YtBX3aDQEqPsjTytYdcu6CN3vn7X1l-Lw20W_CTnDT7iFWH9XSL6oMdeGZ22g7BfvhvMZAP0yeXnUCVWEEQOcjxmjCtVA3At5QgftyXumPAlefvJwCOPWKOQdrRAT-c1s_v-PcG7cSwindDsiwlB9CDrhiGVkGmsysfeA",
+        "PATH": "/Users/swapnilkarale/.jetro/runtime:/Users/swapnilkarale/.local/bin:/Users/swapnilkarale/.local/bin:/Users/swapnilkarale/.nvm/versions/node/v24.15.0/bin:/usr/local/bin:/usr/local/sbin:/opt/homebrew/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/Users/swapnilkarale/.rvm/bin:/Users/swapnilkarale/Library/Android/sdk/emulator:/Users/swapnilkarale/Library/Android/sdk/platform-tools:/Users/swapnilkarale/.cache/lm-studio/bin"
+      }
+    }
+  }
+}

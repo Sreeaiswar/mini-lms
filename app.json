@@ -3,9 +3,10 @@
     "name": "mini-lms",
     "slug": "mini-lms",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    
     "ios": {
       "supportsTablet": true
     },
@@ -19,13 +20,36 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
       "expo-status-bar",
       "expo-secure-store",
-      "expo-asset"
+      "expo-asset",
+      "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow access to your photos to update your profile picture."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2563eb"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#f8fafc"
+        }
+      ]
     ]
   }
 }

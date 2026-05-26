@@ -1,15 +1,11 @@
-import { View, Text } from "react-native";
+import { Redirect } from "expo-router";
+
+import { useAuthStore } from "../src/store/authStore";
 
 export default function Index() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Mini LMS </Text>
-    </View>
+    <Redirect href={isAuthenticated ? "/(tabs)/home" : "/(auth)/login"} />
   );
 }
