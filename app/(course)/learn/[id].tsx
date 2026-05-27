@@ -299,14 +299,33 @@ export default function CourseLearningScreen() {
                   return (
                     <View
                       key={lesson.id}
-                      className="flex-row items-center justify-between gap-3 border-t py-2.5"
+                      className="border-t py-3"
                       style={{ borderColor: colors.border }}
                     >
-                      <View className="flex-1 flex-row items-center gap-2.5">
+                      <Pressable
+                        onPress={() =>
+                          !completed &&
+                          !isCompleting &&
+                          void handleMarkLessonComplete(lesson.id)
+                        }
+                        disabled={completed || isCompleting}
+                        style={({ pressed }) => ({
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 10,
+                          opacity: pressed && !completed ? 0.7 : 1,
+                        })}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          completed
+                            ? `${lesson.title} completed`
+                            : `Mark ${lesson.title} as complete`
+                        }
+                      >
                         {completed ? (
-                          <CheckCircle2 size={20} color={colors.success} />
+                          <CheckCircle2 size={22} color={colors.success} />
                         ) : (
-                          <Circle size={20} color={colors.placeholder} />
+                          <Circle size={22} color={colors.placeholder} />
                         )}
                         <Text
                           className={cn(
@@ -318,21 +337,31 @@ export default function CourseLearningScreen() {
                               ? colors.mutedText
                               : colors.secondaryText,
                           }}
+                          numberOfLines={2}
                         >
                           {lesson.title}
                         </Text>
-                      </View>
+                      </Pressable>
+
                       <Pressable
-                        className="min-w-[118px] items-center rounded-lg px-3 py-2"
+                        className="mt-2 self-stretch items-center justify-center rounded-lg py-2.5"
                         style={({ pressed }) => ({
                           backgroundColor: completed
-                            ? colors.success
+                            ? colors.successBg
                             : pressed
                               ? colors.primaryDark
                               : colors.primary,
+                          borderWidth: completed ? 1 : 0,
+                          borderColor: colors.success,
                         })}
                         onPress={() => void handleMarkLessonComplete(lesson.id)}
                         disabled={completed || isCompleting}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          completed
+                            ? `${lesson.title} completed`
+                            : `Mark ${lesson.title} as complete`
+                        }
                       >
                         {isCompleting ? (
                           <ActivityIndicator
@@ -342,9 +371,15 @@ export default function CourseLearningScreen() {
                         ) : (
                           <Text
                             className="text-xs font-bold"
-                            style={{ color: colors.onPrimary }}
+                            style={{
+                              color: completed
+                                ? colors.successText
+                                : colors.onPrimary,
+                            }}
                           >
-                            {completed ? "Completed" : "Mark Complete"}
+                            {completed
+                              ? "Lesson Completed ✓"
+                              : "Mark Lesson as Complete"}
                           </Text>
                         )}
                       </Pressable>
