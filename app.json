@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Nexora",
-    "slug": "Nexora",
+    "slug": "mini-lms",
     "version": "1.0.1",
     "orientation": "default",
     "icon": "./assets/splash-icon.png",
