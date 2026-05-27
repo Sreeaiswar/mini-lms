@@ -299,69 +299,55 @@ export default function CourseLearningScreen() {
                   return (
                     <View
                       key={lesson.id}
-                      className="border-t py-3"
+                      className="flex-row items-center justify-between gap-3 border-t py-2.5"
                       style={{ borderColor: colors.border }}
                     >
                       <Pressable
-                        onPress={() =>
-                          !completed &&
-                          !isCompleting &&
-                          void handleMarkLessonComplete(lesson.id)
-                        }
+                        onPress={() => void handleMarkLessonComplete(lesson.id)}
                         disabled={completed || isCompleting}
-                        style={({ pressed }) => ({
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: 10,
-                          opacity: pressed && !completed ? 0.7 : 1,
-                        })}
+                        hitSlop={8}
                         accessibilityRole="button"
                         accessibilityLabel={
                           completed
                             ? `${lesson.title} completed`
                             : `Mark ${lesson.title} as complete`
                         }
+                        style={({ pressed }) => ({
+                          padding: 2,
+                          opacity: pressed && !completed ? 0.6 : 1,
+                        })}
                       >
                         {completed ? (
                           <CheckCircle2 size={22} color={colors.success} />
                         ) : (
                           <Circle size={22} color={colors.placeholder} />
                         )}
-                        <Text
-                          className={cn(
-                            "flex-1 text-sm font-semibold",
-                            completed && "line-through"
-                          )}
-                          style={{
-                            color: completed
-                              ? colors.mutedText
-                              : colors.secondaryText,
-                          }}
-                          numberOfLines={2}
-                        >
-                          {lesson.title}
-                        </Text>
                       </Pressable>
-
+                      <Text
+                        className={cn(
+                          "flex-1 text-sm font-semibold",
+                          completed && "line-through"
+                        )}
+                        style={{
+                          color: completed
+                            ? colors.mutedText
+                            : colors.secondaryText,
+                        }}
+                        numberOfLines={2}
+                      >
+                        {lesson.title}
+                      </Text>
                       <Pressable
-                        className="mt-2 self-stretch items-center justify-center rounded-lg py-2.5"
+                        className="min-w-[118px] items-center rounded-lg px-3 py-2"
                         style={({ pressed }) => ({
                           backgroundColor: completed
-                            ? colors.successBg
+                            ? colors.success
                             : pressed
                               ? colors.primaryDark
                               : colors.primary,
-                          borderWidth: completed ? 1 : 0,
-                          borderColor: colors.success,
                         })}
                         onPress={() => void handleMarkLessonComplete(lesson.id)}
                         disabled={completed || isCompleting}
-                        accessibilityRole="button"
-                        accessibilityLabel={
-                          completed
-                            ? `${lesson.title} completed`
-                            : `Mark ${lesson.title} as complete`
-                        }
                       >
                         {isCompleting ? (
                           <ActivityIndicator
@@ -371,15 +357,9 @@ export default function CourseLearningScreen() {
                         ) : (
                           <Text
                             className="text-xs font-bold"
-                            style={{
-                              color: completed
-                                ? colors.successText
-                                : colors.onPrimary,
-                            }}
+                            style={{ color: colors.onPrimary }}
                           >
-                            {completed
-                              ? "Lesson Completed ✓"
-                              : "Mark Lesson as Complete"}
+                            {completed ? "Completed" : "Mark Complete"}
                           </Text>
                         )}
                       </Pressable>
