@@ -433,7 +433,7 @@ export default function CourseDetailScreen() {
           ) : (
             <Text
               className="text-[17px] font-bold"
-              style={{ color: colors.onPrimary }}
+              style={{ color: colors.primary }}
             >
               {enrollLabel}
             </Text>
