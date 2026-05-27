@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -19,6 +19,7 @@ import { ErrorState } from "../../src/components/common/ErrorState";
 import { LoadingState } from "../../src/components/common/LoadingState";
 import { ProgressBar } from "../../src/components/common/ProgressBar";
 import { useNetworkStatus } from "../../src/hooks/useNetworkStatus";
+import { useTheme } from "../../src/hooks/useTheme";
 import { courseCache } from "../../src/services/courseCache";
 import {
   useBookmarkStore,
@@ -36,6 +37,7 @@ const COURSE_LIMIT = 10;
 export default function CourseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const courseId = Number(id);
+  const { colors, isDark } = useTheme();
   const { isLandscape, contentPadding, maxContentWidth, heroImageHeight } =
     useResponsiveLayout();
 
@@ -203,9 +205,18 @@ export default function CourseDetailScreen() {
       accessibilityRole="button"
       accessibilityLabel="Go back"
     >
-      <ArrowLeft size={22} color="#0f172a" />
+      <ArrowLeft size={22} color={colors.headerText} />
     </Pressable>
-  ), []);
+  ), [colors.headerText]);
+
+  const headerScreenOptions = useMemo(
+    () => ({
+      headerStyle: { backgroundColor: colors.header },
+      headerTintColor: colors.headerText,
+      headerTitleStyle: { color: colors.headerText },
+    }),
+    [colors.header, colors.headerText]
+  );
 
   if (isLoading) {
     return (
@@ -214,6 +225,7 @@ export default function CourseDetailScreen() {
           options={{
             title: "Course Details",
             headerLeft: headerBack,
+            ...headerScreenOptions,
           }}
         />
         <LoadingState message="Loading courses..." />
@@ -228,6 +240,7 @@ export default function CourseDetailScreen() {
           options={{
             title: "Course Details",
             headerLeft: headerBack,
+            ...headerScreenOptions,
           }}
         />
         <ErrorState
@@ -255,10 +268,12 @@ export default function CourseDetailScreen() {
         options={{
           title: course.title,
           headerLeft: headerBack,
+          ...headerScreenOptions,
         }}
       />
       <ScrollView
-        className="flex-1 bg-canvas"
+        className="flex-1"
+        style={{ backgroundColor: colors.background }}
         contentContainerStyle={{
           padding: contentPadding,
           paddingBottom: 40,
@@ -282,7 +297,14 @@ export default function CourseDetailScreen() {
               containerStyle={{ width: "100%", height: heroImageHeight }}
               borderRadius={14}
             />
-            <View className="absolute right-3 top-3 rounded-3xl bg-white/90">
+            <View
+              className="absolute right-3 top-3 rounded-3xl"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(15,23,42,0.85)"
+                  : "rgba(255,255,255,0.9)",
+              }}
+            >
               <BookmarkIcon
                 size="large"
                 isBookmarked={bookmarked}
@@ -292,44 +314,87 @@ export default function CourseDetailScreen() {
           </View>
 
           <View className={isLandscape ? "flex-[1.2]" : undefined}>
-            <Text className="mb-1 text-2xl font-bold text-ink">
+            <Text
+              className="mb-1 text-2xl font-bold"
+              style={{ color: colors.text }}
+            >
               {course.title}
             </Text>
-            <Text className="mb-3 text-sm font-semibold capitalize text-brand">
+            <Text
+              className="mb-3 text-sm font-semibold capitalize"
+              style={{ color: colors.primary }}
+            >
               {course.category}
             </Text>
 
             <View className="mb-5 flex-row flex-wrap" style={{ gap: 12 }}>
-              <Text className="text-[15px] font-semibold text-[#ca8a04]">
+              <Text
+                className="text-[15px] font-semibold"
+                style={{ color: colors.warning }}
+              >
                 ★ {course.rating.toFixed(1)}
               </Text>
-              <Text className="text-[15px] font-bold text-ink">
+              <Text
+                className="text-[15px] font-bold"
+                style={{ color: colors.text }}
+              >
                 ${course.price.toFixed(2)}
               </Text>
-              <Text className="text-[15px] text-muted">{course.brand}</Text>
+              <Text
+                className="text-[15px]"
+                style={{ color: colors.mutedText }}
+              >
+                {course.brand}
+              </Text>
             </View>
 
-            <Text className="mb-2 text-base font-bold text-label">
+            <Text
+              className="mb-2 text-base font-bold"
+              style={{ color: colors.secondaryText }}
+            >
               Description
             </Text>
-            <Text className="mb-6 text-[15px] leading-[22px] text-body">
+            <Text
+              className="mb-6 text-[15px] leading-[22px]"
+              style={{ color: colors.secondaryText }}
+            >
               {course.description}
             </Text>
 
-            <Text className="mb-2 text-base font-bold text-label">
+            <Text
+              className="mb-2 text-base font-bold"
+              style={{ color: colors.secondaryText }}
+            >
               Instructor
             </Text>
-            <View className="mb-7 flex-row items-center gap-3 rounded-xl border border-line bg-white p-3.5">
+            <View
+              className="mb-7 flex-row items-center gap-3 rounded-xl border p-3.5"
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              }}
+            >
               <Image
                 source={{ uri: course.instructorAvatar }}
-                style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: "#e2e8f0" }}
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: colors.border,
+                }}
                 contentFit="cover"
               />
               <View className="flex-1">
-                <Text className="mb-1 text-base font-bold text-ink">
+                <Text
+                  className="mb-1 text-base font-bold"
+                  style={{ color: colors.text }}
+                >
                   {course.instructorName}
                 </Text>
-                <Text className="text-sm text-muted">
+                <Text
+                  className="text-sm"
+                  style={{ color: colors.mutedText }}
+                >
                   {course.instructorEmail}
                 </Text>
               </View>
@@ -338,10 +403,14 @@ export default function CourseDetailScreen() {
         </View>
 
         <Pressable
-          className="mb-4 items-center rounded-xl bg-[#7c3aed] py-3.5"
+          className="mb-4 items-center rounded-xl py-3.5"
+          style={{ backgroundColor: isDark ? "#8B5CF6" : "#7c3aed" }}
           onPress={handleOpenCourseContent}
         >
-          <Text className="text-base font-bold text-white">
+          <Text
+            className="text-base font-bold"
+            style={{ color: colors.onPrimary }}
+          >
             Open Course Content
           </Text>
         </Pressable>
@@ -349,21 +418,27 @@ export default function CourseDetailScreen() {
         <Pressable
           className={cn(
             "min-h-[52px] items-center justify-center rounded-xl py-4",
-            enrolled ? "bg-[#16a34a]" : "bg-brand",
             isEnrolling && "opacity-[0.85]"
           )}
-          style={({ pressed }) =>
-            pressed && !enrolled && !isEnrolling
-              ? { backgroundColor: "#1d4ed8" }
-              : undefined
-          }
+          style={({ pressed }) => ({
+            backgroundColor: enrolled
+              ? colors.success
+              : pressed && !isEnrolling
+                ? colors.primaryDark
+                : colors.primary,
+          })}
           onPress={() => void handleEnroll()}
           disabled={enrolled || isEnrolling || isOffline}
         >
           {isEnrolling ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={colors.onPrimary} />
           ) : (
-            <Text className="text-[17px] font-bold text-white">{enrollLabel}</Text>
+            <Text
+              className="text-[17px] font-bold"
+              style={{ color: colors.onPrimary }}
+            >
+              {enrollLabel}
+            </Text>
           )}
         </Pressable>
 
@@ -374,10 +449,18 @@ export default function CourseDetailScreen() {
               <ProgressBar progress={progressPercent} />
             </View>
             <Pressable
-              className="mt-3 items-center rounded-xl bg-ink py-3.5"
+              className="mt-3 items-center rounded-xl py-3.5"
+              style={{
+                backgroundColor: isDark ? colors.card : colors.text,
+                borderWidth: isDark ? 1 : 0,
+                borderColor: colors.border,
+              }}
               onPress={handleContinueLearning}
             >
-              <Text className="text-base font-bold text-white">
+              <Text
+                className="text-base font-bold"
+                style={{ color: isDark ? colors.text : "#ffffff" }}
+              >
                 {progressPercent >= 100
                   ? "Review Course Content"
                   : "Continue Learning"}

@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 
+import { useTheme } from "../hooks/useTheme";
 import type { CourseListItem } from "../types/courseTypes";
 import { shadows } from "../styles/ui";
 import { BookmarkIcon } from "./BookmarkIcon";
@@ -24,6 +25,8 @@ function CourseListCardComponent({
   onToggleBookmark,
   progressPercent,
 }: CourseListCardProps) {
+  const { colors } = useTheme();
+
   const handlePress = useCallback(() => {
     router.push(`/(course)/${course.id}`);
   }, [course.id]);
@@ -34,8 +37,15 @@ function CourseListCardComponent({
 
   return (
     <View
-      className="mb-[14px] flex-row items-start overflow-hidden rounded-card border border-line bg-white"
-      style={shadows.courseCard}
+      className="mb-[14px] flex-row items-start overflow-hidden rounded-card border"
+      style={[
+        shadows.courseCard,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          shadowColor: colors.shadow,
+        },
+      ]}
     >
       <Pressable className="flex-1 flex-row" onPress={handlePress}>
         <CourseImage
@@ -48,8 +58,9 @@ function CourseListCardComponent({
         <View className="min-h-[132px] flex-1 justify-between p-3">
           <View>
             <Text
-              className="text-base font-bold text-ink"
+              className="text-base font-bold"
               numberOfLines={2}
+              style={{ color: colors.text }}
             >
               {course.title}
             </Text>
@@ -57,10 +68,17 @@ function CourseListCardComponent({
               <CourseProgressBadge progressPercent={progressPercent} />
             ) : null}
           </View>
-          <Text className="text-xs font-semibold capitalize text-brand">
+          <Text
+            className="text-xs font-semibold capitalize"
+            style={{ color: colors.primary }}
+          >
             {course.category}
           </Text>
-          <Text className="text-xs text-muted" numberOfLines={2}>
+          <Text
+            className="text-xs"
+            numberOfLines={2}
+            style={{ color: colors.mutedText }}
+          >
             {course.description}
           </Text>
           <View className="mt-1 flex-row items-center gap-2">
@@ -70,19 +88,23 @@ function CourseListCardComponent({
                 width: 30,
                 height: 30,
                 borderRadius: 15,
-                backgroundColor: "#e2e8f0",
+                backgroundColor: colors.border,
               }}
               contentFit="cover"
               transition={200}
             />
             <View className="flex-1 gap-0.5">
               <Text
-                className="text-[13px] font-semibold text-label"
+                className="text-[13px] font-semibold"
                 numberOfLines={1}
+                style={{ color: colors.secondaryText }}
               >
                 {course.instructorName}
               </Text>
-              <Text className="text-xs font-semibold text-[#ca8a04]">
+              <Text
+                className="text-xs font-semibold"
+                style={{ color: colors.warning }}
+              >
                 ★ {course.rating.toFixed(1)}
               </Text>
             </View>

@@ -4,11 +4,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WifiOff } from "lucide-react-native";
 
 import { useNetworkStatus } from "../../hooks/useNetworkStatus";
-import { cn } from "../../utils/cn";
+import { useTheme } from "../../hooks/useTheme";
 
 export function OfflineBanner() {
   const { isOffline } = useNetworkStatus();
   const insets = useSafeAreaInsets();
+  const { isDark } = useTheme();
   const [wasOffline, setWasOffline] = useState(false);
   const [showRetry, setShowRetry] = useState(false);
   const slideAnim = useRef(new Animated.Value(-80)).current;
@@ -39,6 +40,15 @@ export function OfflineBanner() {
     setWasOffline(false);
   };
 
+  const bgColor =
+    showRetry && !isOffline
+      ? isDark
+        ? "#14532D"
+        : "#15803d"
+      : isDark
+        ? "#78350F"
+        : "#b45309";
+
   return (
     <Animated.View
       className="absolute left-0 right-0 top-0 z-[1000]"
@@ -49,10 +59,8 @@ export function OfflineBanner() {
       pointerEvents="box-none"
     >
       <View
-        className={cn(
-          "flex-row items-center justify-center gap-2 px-4 py-2.5",
-          showRetry && !isOffline ? "bg-green-700" : "bg-amber-700"
-        )}
+        className="flex-row items-center justify-center gap-2 px-4 py-2.5"
+        style={{ backgroundColor: bgColor }}
       >
         {isOffline ? (
           <>

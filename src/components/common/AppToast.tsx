@@ -1,28 +1,54 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Animated, Pressable, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CheckCircle2, Info, X, XCircle } from "lucide-react-native";
 
+import { useTheme } from "../../hooks/useTheme";
 import { useToastStore, type ToastType } from "../../store/toastStore";
+import type { ThemeColors } from "../../constants/theme";
 
-const TOAST_COLORS: Record<ToastType, { bg: string; border: string }> = {
-  success: { bg: "#ecfdf5", border: "#16a34a" },
-  error: { bg: "#fef2f2", border: "#dc2626" },
-  info: { bg: "#eff6ff", border: "#2563eb" },
-};
-
-function ToastIcon({ type }: { type: ToastType }) {
-  const size = 20;
-
+function getToastPalette(
+  type: ToastType,
+  colors: ThemeColors
+): { bg: string; border: string; icon: string; text: string } {
   if (type === "success") {
-    return <CheckCircle2 size={size} color="#16a34a" />;
+    return {
+      bg: colors.successBg,
+      border: colors.success,
+      icon: colors.success,
+      text: colors.successText,
+    };
   }
 
   if (type === "error") {
-    return <XCircle size={size} color="#dc2626" />;
+    return {
+      bg: colors.errorBg,
+      border: colors.error,
+      icon: colors.error,
+      text: colors.errorText,
+    };
   }
 
-  return <Info size={size} color="#2563eb" />;
+  return {
+    bg: colors.infoBg,
+    border: colors.info,
+    icon: colors.info,
+    text: colors.infoText,
+  };
+}
+
+function ToastIcon({ type, color }: { type: ToastType; color: string }) {
+  const size = 20;
+
+  if (type === "success") {
+    return <CheckCircle2 size={size} color={color} />;
+  }
+
+  if (type === "error") {
+    return <XCircle size={size} color={color} />;
+  }
+
+  return <Info size={size} color={color} />;
 }
 
 export function AppToast() {
@@ -30,6 +56,9 @@ export function AppToast() {
   const insets = useSafeAreaInsets();
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(24)).current;
+  const { colors } = useTheme();
+
+  const palette = useMemo(() => getToastPalette(type, colors), [type, colors]);
 
   useEffect(() => {
     if (visible) {
@@ -66,8 +95,6 @@ export function AppToast() {
     return null;
   }
 
-  const colors = TOAST_COLORS[type];
-
   return (
     <Animated.View
       pointerEvents="box-none"
@@ -84,19 +111,24 @@ export function AppToast() {
         className="flex-row items-center rounded-xl border px-4 py-3.5"
         style={{
           gap: 10,
-          backgroundColor: colors.bg,
-          borderColor: colors.border,
-          shadowColor: "#0f172a",
+          backgroundColor: palette.bg,
+          borderColor: palette.border,
+          shadowColor: colors.shadow,
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.12,
+          shadowOpacity: 0.18,
           shadowRadius: 8,
         }}
         accessibilityRole="alert"
         accessibilityLiveRegion="polite"
       >
-        <ToastIcon type={type} />
-        <Text className="flex-1 text-sm font-semibold text-ink">{message}</Text>
-        <X size={18} color="#64748b" />
+        <ToastIcon type={type} color={palette.icon} />
+        <Text
+          className="flex-1 text-sm font-semibold"
+          style={{ color: palette.text }}
+        >
+          {message}
+        </Text>
+        <X size={18} color={colors.mutedText} />
       </Pressable>
     </Animated.View>
   );

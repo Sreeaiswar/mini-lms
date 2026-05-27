@@ -14,3 +14,4 @@ export const APP_NOTIFICATIONS_STORAGE_KEY =
 export const WELCOME_NOTIFICATION_SHOWN_KEY =
   "@mini-lms/notifications/welcome-shown";
 export const USER_PREFERENCES_STORAGE_KEY = "@mini-lms/user-preferences";
+export const PROFILE_PICTURE_STORAGE_KEY = "@mini-lms/profile-picture";

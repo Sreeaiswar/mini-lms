@@ -20,7 +20,9 @@ import { EmptyState } from "../../src/components/common/EmptyState";
 import { ErrorState } from "../../src/components/common/ErrorState";
 import { LoadingState } from "../../src/components/common/LoadingState";
 import { ProgressBar } from "../../src/components/common/ProgressBar";
+import { PROFILE_PICTURE_STORAGE_KEY } from "../../src/constants/storageKeys";
 import { useNetworkStatus } from "../../src/hooks/useNetworkStatus";
+import { useTheme } from "../../src/hooks/useTheme";
 import { useAuthStore } from "../../src/store/authStore";
 import {
   useBookmarkedCourseIds,
@@ -40,10 +42,10 @@ import { shadows } from "../../src/styles/ui";
 import { cn } from "../../src/utils/cn";
 
 const DEFAULT_AVATAR = "https://via.placeholder.com/200x200.png";
-const CACHED_AVATAR_KEY = "@mini_lms_cached_avatar_url";
 
 export default function ProfileScreen() {
   const { contentPadding, maxContentWidth, isLandscape } = useResponsiveLayout();
+  const { colors, isDark } = useTheme();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const uploadAvatar = useAuthStore((state) => state.uploadAvatar);
@@ -99,23 +101,24 @@ export default function ProfileScreen() {
   useEffect(() => {
     async function restoreCachedAvatar() {
       try {
-        const cached = await AsyncStorage.getItem(CACHED_AVATAR_KEY);
-        if (cached) {
+        const cached = await AsyncStorage.getItem(PROFILE_PICTURE_STORAGE_KEY);
+        if (cached && typeof cached === "string" && cached.length > 0) {
           setCachedAvatarUrl(cached);
         }
       } catch (error) {
-        console.error("Failed to restore cached avatar:", error);
+        console.warn("[profile] failed to restore cached avatar", error);
       }
     }
     void restoreCachedAvatar();
   }, []);
 
   useEffect(() => {
-    if (user?.avatar?.url && user.avatar.url !== cachedAvatarUrl) {
-      void AsyncStorage.setItem(CACHED_AVATAR_KEY, user.avatar.url).catch(
-        (error) => console.error("Failed to cache avatar:", error)
+    const remoteAvatar = user?.avatar?.url;
+    if (remoteAvatar && remoteAvatar !== cachedAvatarUrl) {
+      void AsyncStorage.setItem(PROFILE_PICTURE_STORAGE_KEY, remoteAvatar).catch(
+        (error) => console.warn("[profile] failed to cache avatar", error)
       );
-      setCachedAvatarUrl(user.avatar.url);
+      setCachedAvatarUrl(remoteAvatar);
     }
   }, [user?.avatar?.url, cachedAvatarUrl]);
 
@@ -182,8 +185,18 @@ export default function ProfileScreen() {
     try {
       await uploadAvatar(asset.uri, mimeType, fileName);
       await refreshCurrentUser();
+      const updated = useAuthStore.getState().user?.avatar?.url ?? asset.uri;
+      await AsyncStorage.setItem(PROFILE_PICTURE_STORAGE_KEY, updated);
+      setCachedAvatarUrl(updated);
       showToast("Avatar updated", "success");
     } catch (error) {
+      // Even if remote upload fails, keep the local copy so the user sees their selection.
+      try {
+        await AsyncStorage.setItem(PROFILE_PICTURE_STORAGE_KEY, asset.uri);
+        setCachedAvatarUrl(asset.uri);
+      } catch {
+        // ignore storage failure
+      }
       showToast(getErrorMessage(error), "error");
     } finally {
       setIsUploadingAvatar(false);
@@ -192,6 +205,9 @@ export default function ProfileScreen() {
 
   const handleLogout = useCallback(() => {
     showToast("Logged out successfully", "info");
+    void AsyncStorage.removeItem(PROFILE_PICTURE_STORAGE_KEY).catch(() => {
+      // ignore
+    });
     void logout();
   }, [logout, showToast]);
 
@@ -210,7 +226,8 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-canvas"
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
       contentContainerStyle={{
         flexGrow: 1,
         padding: contentPadding,
@@ -225,12 +242,14 @@ export default function ProfileScreen() {
           refreshing={isRefreshing}
           onRefresh={() => void handleRefresh()}
           enabled={!isOffline}
-          tintColor="#2563eb"
-          colors={["#2563eb"]}
+          tintColor={colors.primary}
+          colors={[colors.primary]}
         />
       }
     >
-      <Text className="mb-7 text-[26px] font-bold text-ink">Profile</Text>
+      <Text className="mb-7 text-[26px] font-bold" style={{ color: colors.text }}>
+        Profile
+      </Text>
 
       <View className="mb-8 items-center">
         <Image
@@ -239,26 +258,31 @@ export default function ProfileScreen() {
             width: 120,
             height: 120,
             borderRadius: 60,
-            backgroundColor: "#e2e8f0",
+            backgroundColor: colors.border,
             marginBottom: 16,
             borderWidth: 3,
-            borderColor: "#ffffff",
+            borderColor: colors.card,
           }}
           contentFit="cover"
           transition={200}
+          recyclingKey={avatarUrl}
         />
         <Pressable
           className={cn(
-            "min-w-[220px] items-center rounded-control bg-brand px-5 py-3",
+            "min-w-[220px] items-center rounded-control px-5 py-3",
             isBusy && "opacity-70"
           )}
+          style={{ backgroundColor: colors.primary }}
           onPress={() => void handleChangeProfilePicture()}
           disabled={isBusy}
         >
           {isUploadingAvatar ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={colors.onPrimary} />
           ) : (
-            <Text className="text-[15px] font-semibold text-white">
+            <Text
+              className="text-[15px] font-semibold"
+              style={{ color: colors.onPrimary }}
+            >
               Change Profile Picture
             </Text>
           )}
@@ -266,7 +290,10 @@ export default function ProfileScreen() {
       </View>
 
       <View className="mb-8">
-        <Text className="mb-3.5 text-lg font-bold text-ink">
+        <Text
+          className="mb-3.5 text-lg font-bold"
+          style={{ color: colors.text }}
+        >
           Your Statistics
         </Text>
         <View
@@ -278,38 +305,78 @@ export default function ProfileScreen() {
           }}
         >
           <View
-            className="min-w-[100px] flex-1 items-center gap-1.5 rounded-card border border-line bg-white px-3 py-[18px]"
-            style={shadows.statCard}
+            className="min-w-[100px] flex-1 items-center gap-1.5 rounded-card border px-3 py-[18px]"
+            style={[
+              shadows.statCard,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                shadowColor: colors.shadow,
+              },
+            ]}
           >
-            <GraduationCap size={22} color="#2563eb" />
-            <Text className="text-2xl font-bold text-ink">
+            <GraduationCap size={22} color={colors.primary} />
+            <Text
+              className="text-2xl font-bold"
+              style={{ color: colors.text }}
+            >
               {statistics.coursesEnrolled}
             </Text>
-            <Text className="text-center text-xs font-semibold text-muted">
+            <Text
+              className="text-center text-xs font-semibold"
+              style={{ color: colors.mutedText }}
+            >
               Enrolled
             </Text>
           </View>
           <View
-            className="min-w-[100px] flex-1 items-center gap-1.5 rounded-card border border-line bg-white px-3 py-[18px]"
-            style={shadows.statCard}
+            className="min-w-[100px] flex-1 items-center gap-1.5 rounded-card border px-3 py-[18px]"
+            style={[
+              shadows.statCard,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                shadowColor: colors.shadow,
+              },
+            ]}
           >
-            <BookOpen size={22} color="#16a34a" />
-            <Text className="text-2xl font-bold text-ink">
+            <BookOpen size={22} color={colors.success} />
+            <Text
+              className="text-2xl font-bold"
+              style={{ color: colors.text }}
+            >
               {statistics.coursesCompleted}
             </Text>
-            <Text className="text-center text-xs font-semibold text-muted">
+            <Text
+              className="text-center text-xs font-semibold"
+              style={{ color: colors.mutedText }}
+            >
               Completed
             </Text>
           </View>
           <View
-            className="min-w-[100px] flex-1 items-center gap-1.5 rounded-card border border-line bg-white px-3 py-[18px]"
-            style={{ ...shadows.statCard, flexBasis: "100%" }}
+            className="min-w-[100px] flex-1 items-center gap-1.5 rounded-card border px-3 py-[18px]"
+            style={[
+              shadows.statCard,
+              {
+                flexBasis: "100%",
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                shadowColor: colors.shadow,
+              },
+            ]}
           >
-            <TrendingUp size={22} color="#7c3aed" />
-            <Text className="text-2xl font-bold text-ink">
+            <TrendingUp size={22} color={isDark ? "#A78BFA" : "#7c3aed"} />
+            <Text
+              className="text-2xl font-bold"
+              style={{ color: colors.text }}
+            >
               {statistics.progressPercent}%
             </Text>
-            <Text className="text-center text-xs font-semibold text-muted">
+            <Text
+              className="text-center text-xs font-semibold"
+              style={{ color: colors.mutedText }}
+            >
               Overall Progress
             </Text>
           </View>
@@ -317,7 +384,10 @@ export default function ProfileScreen() {
       </View>
 
       <View className="mb-4">
-        <Text className="mb-3.5 text-lg font-bold text-ink">
+        <Text
+          className="mb-3.5 text-lg font-bold"
+          style={{ color: colors.text }}
+        >
           Enrolled Courses
         </Text>
         {enrollments.length === 0 ? (
@@ -338,7 +408,10 @@ export default function ProfileScreen() {
                 <CourseProgressBadge progressPercent={progressPercent} />
                 <ProgressBar progress={progressPercent} />
                 <Pressable onPress={() => handleNavigateToLearn(course.id)}>
-                  <Text className="text-[13px] font-semibold text-brand">
+                  <Text
+                    className="text-[13px] font-semibold"
+                    style={{ color: colors.primary }}
+                  >
                     {progressPercent >= 100
                       ? "Review course →"
                       : "Continue learning →"}
@@ -351,17 +424,32 @@ export default function ProfileScreen() {
       </View>
 
       {completedEnrollments.length > 0 ? (
-        <Text className="mb-6 text-center text-[13px] font-semibold text-[#15803d]">
+        <Text
+          className="mb-6 text-center text-[13px] font-semibold"
+          style={{ color: colors.success }}
+        >
           {completedEnrollments.length} course
           {completedEnrollments.length === 1 ? "" : "s"} completed
         </Text>
       ) : null}
 
       <View className="mb-6">
-        <Text className="mb-3.5 text-lg font-bold text-ink">Preferences</Text>
+        <Text
+          className="mb-3.5 text-lg font-bold"
+          style={{ color: colors.text }}
+        >
+          Preferences
+        </Text>
         <Pressable
-          className="flex-row items-center justify-between rounded-card border border-line bg-white px-4 py-3.5"
-          style={shadows.statCard}
+          className="flex-row items-center justify-between rounded-card border px-4 py-3.5"
+          style={[
+            shadows.statCard,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              shadowColor: colors.shadow,
+            },
+          ]}
           onPress={() => {
             const next = !notificationsEnabled;
             void setNotificationsEnabled(next).then(() => {
@@ -377,35 +465,55 @@ export default function ProfileScreen() {
             });
           }}
         >
-          <Text className="text-[15px] font-semibold text-ink">
+          <Text
+            className="text-[15px] font-semibold"
+            style={{ color: colors.text }}
+          >
             Learning reminders
           </Text>
-          <Text className="text-[15px] font-bold text-brand">
+          <Text
+            className="text-[15px] font-bold"
+            style={{ color: colors.primary }}
+          >
             {notificationsEnabled ? "On" : "Off"}
           </Text>
         </Pressable>
       </View>
 
       <View className="my-2 mb-2">
-        <Text className="mb-3.5 text-lg font-bold text-ink">Account</Text>
-        <Text className="mb-1 text-[13px] font-semibold text-muted">
+        <Text
+          className="mb-3.5 text-lg font-bold"
+          style={{ color: colors.text }}
+        >
+          Account
+        </Text>
+        <Text
+          className="mb-1 text-[13px] font-semibold"
+          style={{ color: colors.mutedText }}
+        >
           Username
         </Text>
-        <Text className="mb-4 text-base text-ink">
+        <Text className="mb-4 text-base" style={{ color: colors.text }}>
           {user?.username ?? "—"}
         </Text>
-        <Text className="mb-1 text-[13px] font-semibold text-muted">
+        <Text
+          className="mb-1 text-[13px] font-semibold"
+          style={{ color: colors.mutedText }}
+        >
           Email
         </Text>
-        <Text className="mb-4 text-base text-ink">
+        <Text className="mb-4 text-base" style={{ color: colors.text }}>
           {user?.email ?? "—"}
         </Text>
         {user?.fullName ? (
           <>
-            <Text className="mb-1 text-[13px] font-semibold text-muted">
+            <Text
+              className="mb-1 text-[13px] font-semibold"
+              style={{ color: colors.mutedText }}
+            >
               Full name
             </Text>
-            <Text className="mb-4 text-base text-ink">
+            <Text className="mb-4 text-base" style={{ color: colors.text }}>
               {user.fullName}
             </Text>
           </>
@@ -414,16 +522,22 @@ export default function ProfileScreen() {
 
       <Pressable
         className={cn(
-          "mt-4 items-center rounded-control bg-[#dc2626] py-3.5",
+          "mt-4 items-center rounded-control py-3.5",
           isBusy && "opacity-70"
         )}
+        style={{ backgroundColor: colors.error }}
         onPress={handleLogout}
         disabled={isBusy}
       >
         {isLoading && !isUploadingAvatar ? (
-          <ActivityIndicator color="#ffffff" />
+          <ActivityIndicator color={colors.onPrimary} />
         ) : (
-          <Text className="text-base font-semibold text-white">Logout</Text>
+          <Text
+            className="text-base font-semibold"
+            style={{ color: colors.onPrimary }}
+          >
+            Logout
+          </Text>
         )}
       </Pressable>
     </ScrollView>

@@ -6,15 +6,12 @@ import {
   AppTabHeaderBell,
   AppTabHeaderLogo,
 } from "../../src/components/common/AppTabHeader";
+import { useTheme } from "../../src/hooks/useTheme";
 import { requestPermissions } from "../../src/services/notificationService";
 
-const tabHeaderOptions = {
-  headerLeft: () => <AppTabHeaderLogo />,
-  headerRight: () => <AppTabHeaderBell />,
-  headerTitleAlign: "center" as const,
-};
-
 export default function TabsLayout() {
+  const { colors } = useTheme();
+
   useEffect(() => {
     void requestPermissions();
   }, []);
@@ -23,10 +20,21 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: true,
-        tabBarActiveTintColor: "#2563eb",
+        headerStyle: {
+          backgroundColor: colors.header,
+          borderBottomColor: colors.border,
+        },
+        headerTitleStyle: { color: colors.headerText },
+        headerTintColor: colors.headerText,
+        headerShadowVisible: false,
+        sceneStyle: { backgroundColor: colors.background },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.tabBarInactive,
         tabBarStyle: {
           height: 60,
           paddingVertical: 5,
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.tabBarBorder,
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -35,7 +43,9 @@ export default function TabsLayout() {
         tabBarIconStyle: {
           marginBottom: 0,
         },
-        ...tabHeaderOptions,
+        headerLeft: () => <AppTabHeaderLogo />,
+        headerRight: () => <AppTabHeaderBell />,
+        headerTitleAlign: "center" as const,
       }}
     >
       <Tabs.Screen

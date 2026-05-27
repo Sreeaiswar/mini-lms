@@ -20,6 +20,7 @@ import { LoadingState } from "../../src/components/common/LoadingState";
 import { LEGEND_LIST_PERF } from "../../src/constants/flatListConfig";
 import { COURSE_CATEGORIES } from "../../src/constants/courseCategories";
 import { useNetworkStatus } from "../../src/hooks/useNetworkStatus";
+import { useTheme } from "../../src/hooks/useTheme";
 import { courseCache } from "../../src/services/courseCache";
 import { useAuthStore } from "../../src/store/authStore";
 import {
@@ -48,6 +49,7 @@ const keyExtractor = (item: CourseListItem) => String(item.id);
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
   const { isOffline } = useNetworkStatus();
+  const { colors } = useTheme();
   const { listNumColumns, contentPadding, maxContentWidth, isLandscape } =
     useResponsiveLayout();
   const showToast = useToastStore((state) => state.showToast);
@@ -270,10 +272,17 @@ export default function HomeScreen() {
     return (
       <Pressable
         className={cn(
-          "mb-4 overflow-hidden rounded-card border border-line bg-white",
+          "mb-4 overflow-hidden rounded-card border",
           isLandscape && "flex-row"
         )}
-        style={shadows.featuredCard}
+        style={[
+          shadows.featuredCard,
+          {
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            shadowColor: colors.shadow,
+          },
+        ]}
         onPress={() => handleNavigateToCourse(featuredCourse.id)}
       >
         <CourseImage
@@ -288,20 +297,30 @@ export default function HomeScreen() {
           borderRadius={12}
         />
         <View className="gap-1 p-[14px]">
-          <Text className="text-xs font-bold uppercase tracking-[0.5px] text-brand">
+          <Text
+            className="text-xs font-bold uppercase tracking-[0.5px]"
+            style={{ color: colors.primary }}
+          >
             Featured course
           </Text>
-          <Text className="text-lg font-bold text-ink" numberOfLines={2}>
+          <Text
+            className="text-lg font-bold"
+            numberOfLines={2}
+            style={{ color: colors.text }}
+          >
             {featuredCourse.title}
           </Text>
-          <Text className="text-sm font-medium text-muted">
+          <Text
+            className="text-sm font-medium"
+            style={{ color: colors.mutedText }}
+          >
             {featuredCourse.instructorName} · ★{" "}
             {featuredCourse.rating.toFixed(1)}
           </Text>
         </View>
       </Pressable>
     );
-  }, [featuredCourse, handleNavigateToCourse, isLandscape]);
+  }, [featuredCourse, handleNavigateToCourse, isLandscape, colors]);
 
   useEffect(() => {
     void hydratePreferences();
@@ -318,8 +337,14 @@ export default function HomeScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-canvas pt-4">
-        <Text className="mb-1 text-2xl font-bold text-ink">
+      <View
+        className="flex-1 pt-4"
+        style={{ backgroundColor: colors.background }}
+      >
+        <Text
+          className="mb-1 text-2xl font-bold"
+          style={{ color: colors.text }}
+        >
           Welcome{user?.username ? `, ${user.username}` : ""}!
         </Text>
         <View className="flex-1">
@@ -331,8 +356,14 @@ export default function HomeScreen() {
 
   if (errorMessage && courses.length === 0) {
     return (
-      <View className="flex-1 bg-canvas pt-4">
-        <Text className="mb-1 text-2xl font-bold text-ink">
+      <View
+        className="flex-1 pt-4"
+        style={{ backgroundColor: colors.background }}
+      >
+        <Text
+          className="mb-1 text-2xl font-bold"
+          style={{ color: colors.text }}
+        >
           Welcome{user?.username ? `, ${user.username}` : ""}!
         </Text>
         <View className="flex-1">
@@ -347,8 +378,9 @@ export default function HomeScreen() {
 
   return (
     <View
-      className="flex-1 bg-canvas pt-4"
+      className="flex-1 pt-4"
       style={{
+        backgroundColor: colors.background,
         paddingHorizontal: contentPadding,
         maxWidth: maxContentWidth,
         alignSelf: maxContentWidth ? "center" : undefined,
@@ -366,10 +398,16 @@ export default function HomeScreen() {
           className="justify-center pb-4"
           style={{ minHeight: COLLAPSIBLE_HEADER_HEIGHT }}
         >
-          <Text className="mb-1 text-2xl font-bold text-ink">
+          <Text
+            className="mb-1 text-2xl font-bold"
+            style={{ color: colors.text }}
+          >
             Welcome{user?.username ? `, ${user.username}` : ""}!
           </Text>
-          <Text className="text-[17px] font-semibold text-muted">
+          <Text
+            className="text-[17px] font-semibold"
+            style={{ color: colors.mutedText }}
+          >
             Discover courses
           </Text>
         </View>
@@ -379,8 +417,14 @@ export default function HomeScreen() {
         value={searchQuery}
         onChangeText={setSearchQuery}
         placeholder="Search courses by title..."
-        placeholderTextColor="#94a3b8"
-        className="mb-[14px] rounded-xl border border-line bg-white px-[14px] py-3 text-[15px] text-ink"
+        placeholderTextColor={colors.placeholder}
+        className="mb-[14px] rounded-xl border px-[14px] py-3 text-[15px]"
+        style={{
+          backgroundColor: colors.input,
+          borderColor: colors.border,
+          color: colors.text,
+        }}
+        selectionColor={colors.primary}
         autoCapitalize="none"
         autoCorrect={false}
         clearButtonMode="while-editing"
@@ -398,17 +442,18 @@ export default function HomeScreen() {
           return (
             <Pressable
               key={category.id}
-              className={cn(
-                "shrink self-center rounded-chip border border-line bg-white px-[14px] py-2",
-                isSelected && "border-brand bg-brand"
-              )}
+              className="shrink self-center rounded-chip border px-[14px] py-2"
+              style={{
+                borderColor: isSelected ? colors.primary : colors.border,
+                backgroundColor: isSelected ? colors.primary : colors.card,
+              }}
               onPress={() => void setHomeCategory(category.id)}
             >
               <Text
-                className={cn(
-                  "text-[13px] font-semibold text-[#475569]",
-                  isSelected && "text-white"
-                )}
+                className="text-[13px] font-semibold"
+                style={{
+                  color: isSelected ? colors.onPrimary : colors.secondaryText,
+                }}
               >
                 {category.label}
               </Text>

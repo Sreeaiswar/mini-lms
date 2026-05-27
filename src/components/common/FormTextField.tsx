@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { Eye, EyeOff } from "lucide-react-native";
 
-import { cn } from "../../utils/cn";
+import { useTheme } from "../../hooks/useTheme";
 
 const INPUT_HEIGHT = 48;
 
@@ -39,13 +39,15 @@ export function FormTextField<T extends FieldValues>({
   name,
   label,
   containerClassName,
-  className,
   editable = true,
   secureTextEntry,
+  placeholderTextColor,
+  style,
   ...inputProps
 }: FormTextFieldProps<T>) {
   const [showPassword, setShowPassword] = useState(false);
   const isPasswordField = secureTextEntry;
+  const { colors } = useTheme();
 
   return (
     <Controller
@@ -53,26 +55,36 @@ export function FormTextField<T extends FieldValues>({
       name={name}
       render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
         <View className={containerClassName}>
-          <Text className="mb-2 text-sm font-semibold text-label">{label}</Text>
+          <Text
+            className="mb-2 text-sm font-semibold"
+            style={{ color: colors.secondaryText }}
+          >
+            {label}
+          </Text>
           <View className="relative">
             <TextInput
               {...inputProps}
-              className={cn(
-                "mb-1 rounded-control border border-line-input bg-white px-[14px] text-left text-base text-ink",
-                error && "border-red-500",
-                isPasswordField && "pr-[48px]",
-                className
-              )}
+              className="mb-1 rounded-control border px-[14px] text-left text-base"
               style={[
-                { height: INPUT_HEIGHT },
+                {
+                  height: INPUT_HEIGHT,
+                  backgroundColor: colors.input,
+                  borderColor: error ? colors.error : colors.borderStrong,
+                  color: colors.text,
+                },
+                isPasswordField ? { paddingRight: 48 } : null,
                 inputAlignStyle,
-                inputProps.style,
+                style,
               ]}
               value={value ?? ""}
               onChangeText={onChange}
               onBlur={onBlur}
               editable={editable}
               secureTextEntry={isPasswordField && !showPassword}
+              placeholderTextColor={
+                placeholderTextColor ?? colors.placeholder
+              }
+              selectionColor={colors.primary}
             />
             {isPasswordField && (
               <Pressable
@@ -81,15 +93,20 @@ export function FormTextField<T extends FieldValues>({
                 disabled={!editable}
               >
                 {showPassword ? (
-                  <Eye size={20} color="#666" />
+                  <Eye size={20} color={colors.mutedText} />
                 ) : (
-                  <EyeOff size={20} color="#666" />
+                  <EyeOff size={20} color={colors.mutedText} />
                 )}
               </Pressable>
             )}
           </View>
           {error?.message ? (
-            <Text className="mb-3 text-sm text-red-500">{error.message}</Text>
+            <Text
+              className="mb-3 text-sm"
+              style={{ color: colors.error }}
+            >
+              {error.message}
+            </Text>
           ) : (
             <View className="mb-3" />
           )}

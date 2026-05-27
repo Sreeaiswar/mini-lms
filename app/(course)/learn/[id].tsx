@@ -13,6 +13,7 @@ import { ArrowLeft, CheckCircle2, Circle } from "lucide-react-native";
 import { CourseProgressBadge } from "../../../src/components/common/CourseProgressBadge";
 import { LoadingState } from "../../../src/components/common/LoadingState";
 import { ProgressBar } from "../../../src/components/common/ProgressBar";
+import { useTheme } from "../../../src/hooks/useTheme";
 import { useEnrollmentStore } from "../../../src/store/enrollmentStore";
 import { useProgressStore } from "../../../src/store/progressStore";
 import { useToastStore } from "../../../src/store/toastStore";
@@ -23,6 +24,7 @@ import { cn } from "../../../src/utils/cn";
 export default function CourseLearningScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const courseId = Number(id);
+  const { colors } = useTheme();
   const { contentPadding, maxContentWidth, isLandscape } = useResponsiveLayout();
 
   const hydrateEnrollments = useEnrollmentStore((state) => state.hydrate);
@@ -107,14 +109,25 @@ export default function CourseLearningScreen() {
 
   const headerBack = (
     <Pressable onPress={handleGoBack} hitSlop={10} className="rounded-full p-1.5">
-      <ArrowLeft size={22} color="#0f172a" />
+      <ArrowLeft size={22} color={colors.headerText} />
     </Pressable>
+  );
+
+  const headerScreenOptions = useMemo(
+    () => ({
+      headerStyle: { backgroundColor: colors.header },
+      headerTintColor: colors.headerText,
+      headerTitleStyle: { color: colors.headerText },
+    }),
+    [colors.header, colors.headerText]
   );
 
   if (isLoading) {
     return (
       <>
-        <Stack.Screen options={{ title: "Course Content" }} />
+        <Stack.Screen
+          options={{ title: "Course Content", ...headerScreenOptions }}
+        />
         <LoadingState message="Loading learning progress..." />
       </>
     );
@@ -127,17 +140,30 @@ export default function CourseLearningScreen() {
           options={{
             title: "Course Content",
             headerLeft: () => headerBack,
+            ...headerScreenOptions,
           }}
         />
-        <View className="flex-1 items-center justify-center gap-3 bg-canvas px-6">
-          <Text className="text-center text-[15px] leading-[22px] text-muted">
+        <View
+          className="flex-1 items-center justify-center gap-3 px-6"
+          style={{ backgroundColor: colors.background }}
+        >
+          <Text
+            className="text-center text-[15px] leading-[22px]"
+            style={{ color: colors.mutedText }}
+          >
             Enroll in this course to access learning content.
           </Text>
           <Pressable
-            className="rounded-lg bg-brand px-5 py-2.5"
+            className="rounded-lg px-5 py-2.5"
+            style={{ backgroundColor: colors.primary }}
             onPress={handleViewCourse}
           >
-            <Text className="font-semibold text-white">View Course</Text>
+            <Text
+              className="font-semibold"
+              style={{ color: colors.onPrimary }}
+            >
+              View Course
+            </Text>
           </Pressable>
         </View>
       </>
@@ -150,10 +176,12 @@ export default function CourseLearningScreen() {
         options={{
           title: enrollment.course.title,
           headerLeft: () => headerBack,
+          ...headerScreenOptions,
         }}
       />
       <ScrollView
-        className="flex-1 bg-canvas"
+        className="flex-1"
+        style={{ backgroundColor: colors.background }}
         contentContainerStyle={{
           padding: contentPadding,
           paddingBottom: 40,
@@ -163,7 +191,10 @@ export default function CourseLearningScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="mb-2 text-[22px] font-bold text-ink">
+        <Text
+          className="mb-2 text-[22px] font-bold"
+          style={{ color: colors.text }}
+        >
           Course Content
         </Text>
         <View className="mb-6 gap-2">
@@ -176,11 +207,18 @@ export default function CourseLearningScreen() {
             <View
               key={module.id}
               className={cn(
-                "mb-4 rounded-xl border border-line bg-white p-4",
+                "mb-4 rounded-xl border p-4",
                 isLandscape && "mb-0 min-w-[48%] max-w-[49%] flex-1"
               )}
+              style={{
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              }}
             >
-              <Text className="mb-3 text-[17px] font-bold text-ink">
+              <Text
+                className="mb-3 text-[17px] font-bold"
+                style={{ color: colors.text }}
+              >
                 {module.title}
               </Text>
               {module.lessons.map((lesson) => {
@@ -190,40 +228,51 @@ export default function CourseLearningScreen() {
                 return (
                   <View
                     key={lesson.id}
-                    className="flex-row items-center justify-between gap-3 border-t border-[#f1f5f9] py-2.5"
+                    className="flex-row items-center justify-between gap-3 border-t py-2.5"
+                    style={{ borderColor: colors.border }}
                   >
                     <View className="flex-1 flex-row items-center gap-2.5">
                       {completed ? (
-                        <CheckCircle2 size={20} color="#16a34a" />
+                        <CheckCircle2 size={20} color={colors.success} />
                       ) : (
-                        <Circle size={20} color="#94a3b8" />
+                        <Circle size={20} color={colors.placeholder} />
                       )}
                       <Text
                         className={cn(
-                          "flex-1 text-sm font-semibold text-label",
-                          completed && "text-muted line-through"
+                          "flex-1 text-sm font-semibold",
+                          completed && "line-through"
                         )}
+                        style={{
+                          color: completed
+                            ? colors.mutedText
+                            : colors.secondaryText,
+                        }}
                       >
                         {lesson.title}
                       </Text>
                     </View>
                     <Pressable
-                      className={cn(
-                        "min-w-[118px] items-center rounded-lg px-3 py-2",
-                        completed ? "bg-[#16a34a]" : "bg-brand"
-                      )}
-                      style={({ pressed }) =>
-                        pressed && !completed
-                          ? { backgroundColor: "#1d4ed8" }
-                          : undefined
-                      }
+                      className="min-w-[118px] items-center rounded-lg px-3 py-2"
+                      style={({ pressed }) => ({
+                        backgroundColor: completed
+                          ? colors.success
+                          : pressed
+                            ? colors.primaryDark
+                            : colors.primary,
+                      })}
                       onPress={() => void handleMarkLessonComplete(lesson.id)}
                       disabled={completed || isCompleting}
                     >
                       {isCompleting ? (
-                        <ActivityIndicator color="#ffffff" size="small" />
+                        <ActivityIndicator
+                          color={colors.onPrimary}
+                          size="small"
+                        />
                       ) : (
-                        <Text className="text-xs font-bold text-white">
+                        <Text
+                          className="text-xs font-bold"
+                          style={{ color: colors.onPrimary }}
+                        >
                           {completed ? "Completed" : "Mark Complete"}
                         </Text>
                       )}

@@ -3,6 +3,7 @@ import { View, type ImageStyle, type ViewStyle } from "react-native";
 import { Image } from "expo-image";
 
 import { getCategoryCourseImage } from "../../constants/courseImages";
+import { useTheme } from "../../hooks/useTheme";
 import { resolveCourseThumbnail } from "../../utils/resolveCourseImage";
 import { CourseImagePlaceholder } from "./CourseImagePlaceholder";
 
@@ -24,6 +25,7 @@ export function CourseImage({
   borderRadius = 10,
 }: CourseImageProps) {
   const [loadState, setLoadState] = useState<ImageLoadState>("resolved");
+  const { colors } = useTheme();
 
   useEffect(() => {
     setLoadState("resolved");
@@ -58,8 +60,11 @@ export function CourseImage({
   if (loadState === "placeholder" || !imageUri) {
     return (
       <View
-        className="overflow-hidden bg-line"
-        style={[{ borderRadius }, containerStyle]}
+        className="overflow-hidden"
+        style={[
+          { borderRadius, backgroundColor: colors.border },
+          containerStyle,
+        ]}
       >
         <CourseImagePlaceholder borderRadius={borderRadius} />
       </View>
@@ -68,8 +73,11 @@ export function CourseImage({
 
   return (
     <View
-      className="overflow-hidden bg-line"
-      style={[{ borderRadius }, containerStyle]}
+      className="overflow-hidden"
+      style={[
+        { borderRadius, backgroundColor: colors.border },
+        containerStyle,
+      ]}
     >
       <Image
         key={imageUri}

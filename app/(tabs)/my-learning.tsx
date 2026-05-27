@@ -18,9 +18,11 @@ import { ErrorState } from "../../src/components/common/ErrorState";
 import { LoadingState } from "../../src/components/common/LoadingState";
 import { ProgressBar } from "../../src/components/common/ProgressBar";
 import { useNetworkStatus } from "../../src/hooks/useNetworkStatus";
+import { useTheme } from "../../src/hooks/useTheme";
 import { useEnrollmentStore } from "../../src/store/enrollmentStore";
 import { useProgressStore } from "../../src/store/progressStore";
 import type { EnrolledCourse } from "../../src/types/enrollmentTypes";
+import type { ThemeColors } from "../../src/constants/theme";
 import { shadows } from "../../src/styles/ui";
 import { cn } from "../../src/utils/cn";
 
@@ -51,10 +53,12 @@ function LearningCourseCard({
   enrollment,
   isCompleted,
   cardStyle,
+  colors,
 }: {
   enrollment: EnrolledCourse;
   isCompleted: boolean;
   cardStyle?: ViewStyle;
+  colors: ThemeColors;
 }) {
   const { course, progressPercent } = enrollment;
 
@@ -65,11 +69,15 @@ function LearningCourseCard({
   return (
     <Pressable
       className={cn(
-        "mb-3 flex-row overflow-hidden rounded-card border border-line bg-white",
-        isCompleted && "border-[#bbf7d0]"
+        "mb-3 flex-row overflow-hidden rounded-card border"
       )}
       style={({ pressed }) => [
         shadows.learningCard,
+        {
+          backgroundColor: colors.card,
+          borderColor: isCompleted ? colors.success : colors.border,
+          shadowColor: colors.shadow,
+        },
         cardStyle,
         pressed && { opacity: 0.92 },
       ]}
@@ -84,19 +92,26 @@ function LearningCourseCard({
       />
       <View className="flex-1 justify-center gap-1.5 p-3">
         <View className="flex-row items-start gap-2">
-          <Text className="flex-1 text-base font-bold text-ink" numberOfLines={2}>
+          <Text
+            className="flex-1 text-base font-bold"
+            numberOfLines={2}
+            style={{ color: colors.text }}
+          >
             {course.title}
           </Text>
           {isCompleted ? (
             <View className="pt-0.5">
-              <CheckCircle2 size={22} color="#16a34a" />
+              <CheckCircle2 size={22} color={colors.success} />
             </View>
           ) : null}
         </View>
         {isCompleted ? (
           <View className="flex-row items-center gap-1.5">
-            <Award size={14} color="#15803d" />
-            <Text className="text-xs font-bold text-[#15803d]">
+            <Award size={14} color={colors.successText} />
+            <Text
+              className="text-xs font-bold"
+              style={{ color: colors.successText }}
+            >
               Completed · 100%
             </Text>
           </View>
@@ -104,7 +119,10 @@ function LearningCourseCard({
           <CourseProgressBadge progressPercent={progressPercent} />
         )}
         <ProgressBar progress={progressPercent} />
-        <Text className="text-[13px] font-semibold text-muted">
+        <Text
+          className="text-[13px] font-semibold"
+          style={{ color: colors.mutedText }}
+        >
           {isCompleted
             ? "Review course content →"
             : progressPercent > 0
@@ -118,6 +136,7 @@ function LearningCourseCard({
 
 export default function MyLearningScreen() {
   const { isOffline } = useNetworkStatus();
+  const { colors } = useTheme();
   const { isLandscape, contentPadding, maxContentWidth } = useResponsiveLayout();
   const hydrateEnrollments = useEnrollmentStore((state) => state.hydrate);
   const hydrateProgress = useProgressStore((state) => state.hydrate);
@@ -197,7 +216,8 @@ export default function MyLearningScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-canvas"
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
       contentContainerStyle={{
         flexGrow: 1,
         padding: contentPadding,
@@ -212,12 +232,17 @@ export default function MyLearningScreen() {
           refreshing={isRefreshing}
           onRefresh={() => void handleRefresh()}
           enabled={!isOffline}
-          tintColor="#2563eb"
-          colors={["#2563eb"]}
+          tintColor={colors.primary}
+          colors={[colors.primary]}
         />
       }
     >
-      <Text className="mb-6 text-[26px] font-bold text-ink">My Learning</Text>
+      <Text
+        className="mb-6 text-[26px] font-bold"
+        style={{ color: colors.text }}
+      >
+        My Learning
+      </Text>
 
       {enrollments.length === 0 ? (
         <View className="items-center gap-4">
@@ -226,10 +251,14 @@ export default function MyLearningScreen() {
             subtitle="Enroll in a course and begin learning."
           />
           <Pressable
-            className="rounded-control bg-brand px-5 py-3"
+            className="rounded-control px-5 py-3"
+            style={{ backgroundColor: colors.primary }}
             onPress={() => router.push("/(tabs)/home")}
           >
-            <Text className="text-[15px] font-semibold text-white">
+            <Text
+              className="text-[15px] font-semibold"
+              style={{ color: colors.onPrimary }}
+            >
               Browse Courses
             </Text>
           </Pressable>
@@ -239,10 +268,19 @@ export default function MyLearningScreen() {
           {continueLearning.length > 0 ? (
             <View className="mb-7">
               <View className="mb-3.5 flex-row items-center justify-between">
-                <Text className="text-lg font-bold text-label">
+                <Text
+                  className="text-lg font-bold"
+                  style={{ color: colors.secondaryText }}
+                >
                   Continue Learning
                 </Text>
-                <Text className="rounded-chip bg-line px-2.5 py-1 text-[13px] font-bold text-muted">
+                <Text
+                  className="rounded-chip px-2.5 py-1 text-[13px] font-bold"
+                  style={{
+                    backgroundColor: colors.secondaryBackground,
+                    color: colors.mutedText,
+                  }}
+                >
                   {continueLearning.length}
                 </Text>
               </View>
@@ -259,6 +297,7 @@ export default function MyLearningScreen() {
                     enrollment={enrollment}
                     isCompleted={false}
                     cardStyle={landscapeCardStyle}
+                    colors={colors}
                   />
                 ))}
               </View>
@@ -268,10 +307,19 @@ export default function MyLearningScreen() {
           {completedCourses.length > 0 ? (
             <View className="mb-7">
               <View className="mb-3.5 flex-row items-center justify-between">
-                <Text className="text-lg font-bold text-label">
+                <Text
+                  className="text-lg font-bold"
+                  style={{ color: colors.secondaryText }}
+                >
                   Completed Courses
                 </Text>
-                <Text className="rounded-chip bg-line px-2.5 py-1 text-[13px] font-bold text-muted">
+                <Text
+                  className="rounded-chip px-2.5 py-1 text-[13px] font-bold"
+                  style={{
+                    backgroundColor: colors.secondaryBackground,
+                    color: colors.mutedText,
+                  }}
+                >
                   {completedCourses.length}
                 </Text>
               </View>
@@ -288,6 +336,7 @@ export default function MyLearningScreen() {
                     enrollment={enrollment}
                     isCompleted
                     cardStyle={landscapeCardStyle}
+                    colors={colors}
                   />
                 ))}
               </View>

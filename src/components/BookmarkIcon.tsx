@@ -1,6 +1,7 @@
 import { Pressable } from "react-native";
 import { Star } from "lucide-react-native";
 
+import { useTheme } from "../hooks/useTheme";
 import { cn } from "../utils/cn";
 
 interface BookmarkIconProps {
@@ -15,7 +16,10 @@ export function BookmarkIcon({
   size = "small",
 }: BookmarkIconProps) {
   const iconSize = size === "large" ? 28 : 20;
-  const iconColor = isBookmarked ? "#ca8a04" : "#94a3b8";
+  const { colors } = useTheme();
+  const iconColor = isBookmarked
+    ? colors.bookmarkActive
+    : colors.bookmarkInactive;
 
   return (
     <Pressable

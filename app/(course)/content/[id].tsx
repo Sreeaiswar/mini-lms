@@ -8,6 +8,7 @@ import { publicApi } from "../../../src/api/publicApi";
 import { ErrorState } from "../../../src/components/common/ErrorState";
 import { LoadingState } from "../../../src/components/common/LoadingState";
 import { useNetworkStatus } from "../../../src/hooks/useNetworkStatus";
+import { useTheme } from "../../../src/hooks/useTheme";
 import { courseCache } from "../../../src/services/courseCache";
 import { useEnrollmentStore } from "../../../src/store/enrollmentStore";
 import { useProgressStore } from "../../../src/store/progressStore";
@@ -57,6 +58,7 @@ export default function CourseContentWebViewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const courseId = Number(id);
   const webViewRef = useRef<WebView>(null);
+  const { isDark, colors } = useTheme();
 
   const { isOffline } = useNetworkStatus();
   const showToast = useToastStore((state) => state.showToast);
@@ -179,11 +181,11 @@ export default function CourseContentWebViewScreen() {
 
   const webViewPayload: CourseWebViewPayload | null = useMemo(() => {
     if (!course) {
-      console.log("WebViewPayload: course is null");
+      console.log("[WebViewPayload] course is null");
       return null;
     }
 
-    console.log("WebViewPayload: Building payload", {
+    console.log("[WebViewPayload] building payload", {
       courseId: course.id,
       title: course.title,
       enrolled,
@@ -202,9 +204,9 @@ export default function CourseContentWebViewScreen() {
 
   useEffect(() => {
     if (!webViewPayload || !Number.isFinite(courseId)) {
-      console.log("WebViewSource: Skipping preparation", {
+      console.log("[WebViewSource] skipping preparation", {
         hasPayload: !!webViewPayload,
-        courseId: isFinite(courseId) ? courseId : "invalid",
+        courseId: Number.isFinite(courseId) ? courseId : "invalid",
       });
       setWebViewSource(null);
       return;
@@ -213,18 +215,22 @@ export default function CourseContentWebViewScreen() {
     let cancelled = false;
     setIsPreparingWebView(true);
 
-    console.log("WebViewSource: Starting preparation for course", { courseId });
+    console.log("[WebViewSource] starting preparation", { courseId, isDark });
 
-    void prepareWebViewSource(courseId, webViewPayload)
+    void prepareWebViewSource(courseId, webViewPayload, { isDark })
       .then((source) => {
         if (!cancelled) {
-          console.log("WebViewSource: Preparation successful", { courseId });
+          console.log("[WebViewSource] preparation successful", {
+            courseId,
+            uri: source.uri,
+          });
           setWebViewSource(source);
+          setWebViewError(null);
         }
       })
       .catch((error) => {
         if (!cancelled) {
-          console.error("WebViewSource: Preparation failed", {
+          console.error("[WebViewSource] preparation failed", {
             courseId,
             error: error instanceof Error ? error.message : String(error),
           });
@@ -241,7 +247,7 @@ export default function CourseContentWebViewScreen() {
     return () => {
       cancelled = true;
     };
-  }, [courseId, webViewPayload, webViewKey]);
+  }, [courseId, webViewPayload, webViewKey, isDark]);
 
   const findNextLessonId = useCallback((): string | null => {
     const modules = getCourseContent(courseId);
@@ -306,10 +312,19 @@ export default function CourseContentWebViewScreen() {
     setWebViewKey((current) => current + 1);
   }, []);
 
+  const headerScreenOptions = useMemo(
+    () => ({
+      headerStyle: { backgroundColor: colors.header },
+      headerTintColor: colors.headerText,
+      headerTitleStyle: { color: colors.headerText },
+    }),
+    [colors.header, colors.headerText]
+  );
+
   if (isLoadingCourse) {
     return (
       <>
-        <Stack.Screen options={{ title: "Course Content" }} />
+        <Stack.Screen options={{ title: "Course Content", ...headerScreenOptions }} />
         <LoadingState message="Loading course content..." />
       </>
     );
@@ -318,7 +333,7 @@ export default function CourseContentWebViewScreen() {
   if (courseError || !course) {
     return (
       <>
-        <Stack.Screen options={{ title: "Course Content" }} />
+        <Stack.Screen options={{ title: "Course Content", ...headerScreenOptions }} />
         <ErrorState
           message={courseError ?? "Course not found."}
           onRetry={() => void loadCourse()}
@@ -330,7 +345,7 @@ export default function CourseContentWebViewScreen() {
   if (webViewError && !webViewSource) {
     return (
       <>
-        <Stack.Screen options={{ title: course.title }} />
+        <Stack.Screen options={{ title: course.title, ...headerScreenOptions }} />
         <ErrorState
           message={webViewError}
           onRetry={handleRetryWebView}
@@ -342,7 +357,7 @@ export default function CourseContentWebViewScreen() {
   if (isPreparingWebView || !webViewSource) {
     return (
       <>
-        <Stack.Screen options={{ title: course.title }} />
+        <Stack.Screen options={{ title: course.title, ...headerScreenOptions }} />
         <LoadingState message="Preparing WebView content..." />
       </>
     );
@@ -351,7 +366,7 @@ export default function CourseContentWebViewScreen() {
   if (webViewError) {
     return (
       <>
-        <Stack.Screen options={{ title: course.title }} />
+        <Stack.Screen options={{ title: course.title, ...headerScreenOptions }} />
         <ErrorState
           message={webViewError}
           onRetry={handleRetryWebView}
@@ -362,10 +377,13 @@ export default function CourseContentWebViewScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: course.title }} />
-      <View className="flex-1 bg-canvas">
+      <Stack.Screen options={{ title: course.title, ...headerScreenOptions }} />
+      <View className="flex-1" style={{ backgroundColor: colors.background }}>
         {isWebViewLoading ? (
-          <View className="absolute inset-0 z-[2] bg-canvas">
+          <View
+            className="absolute inset-0 z-[2]"
+            style={{ backgroundColor: colors.background }}
+          >
             <LoadingState message="Loading WebView content..." />
           </View>
         ) : null}
@@ -376,25 +394,43 @@ export default function CourseContentWebViewScreen() {
             uri: webViewSource.uri,
             headers: webViewSource.headers,
           }}
-          style={{ flex: 1, backgroundColor: "#f8fafc" }}
+          style={{ flex: 1, backgroundColor: colors.background }}
           originWhitelist={["*"]}
           allowingReadAccessToURL={webViewSource.uri}
+          javaScriptEnabled
+          domStorageEnabled
+          allowFileAccess
+          allowFileAccessFromFileURLs
+          allowUniversalAccessFromFileURLs
+          mixedContentMode="always"
+          setSupportMultipleWindows={false}
+          androidLayerType="hardware"
           onLoadStart={() => {
+            console.log("[WebView] onLoadStart", { uri: webViewSource.uri });
             setIsWebViewLoading(true);
             setWebViewError(null);
           }}
-          onLoadEnd={() => setIsWebViewLoading(false)}
-          onError={() => {
+          onLoadEnd={() => {
+            console.log("[WebView] onLoadEnd");
+            setIsWebViewLoading(false);
+          }}
+          onError={(syntheticEvent) => {
+            const { nativeEvent } = syntheticEvent;
+            console.error("[WebView] onError", nativeEvent);
             setIsWebViewLoading(false);
             setWebViewError("Failed to load course content in WebView.");
           }}
-          onHttpError={() => {
+          onHttpError={(syntheticEvent) => {
+            const { nativeEvent } = syntheticEvent;
+            console.error("[WebView] onHttpError", nativeEvent);
             setIsWebViewLoading(false);
             setWebViewError("Failed to load course content in WebView.");
+          }}
+          onRenderProcessGone={() => {
+            console.warn("[WebView] onRenderProcessGone - reloading");
+            setWebViewKey((current) => current + 1);
           }}
           onMessage={(event) => void handleWebViewMessage(event)}
-          javaScriptEnabled
-          domStorageEnabled
         />
       </View>
     </>

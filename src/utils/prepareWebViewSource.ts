@@ -9,13 +9,27 @@ export interface PreparedWebViewSource {
   headers: Record<string, string>;
 }
 
+export interface PrepareWebViewSourceOptions {
+  isDark?: boolean;
+}
+
 export async function prepareWebViewSource(
   courseId: number,
-  payload: CourseWebViewPayload
+  payload: CourseWebViewPayload,
+  options: PrepareWebViewSourceOptions = {}
 ): Promise<PreparedWebViewSource> {
+  const { isDark = false } = options;
   const headers = buildWebViewHeaders(courseId, payload);
-  const html = buildCourseContentHtml(payload, headers);
-  const file = new File(Paths.cache, `course-content-${courseId}.html`);
+  const html = buildCourseContentHtml(payload, headers, { isDark });
+
+  console.log("[prepareWebViewSource] generated html", {
+    courseId,
+    isDark,
+    htmlLength: html.length,
+  });
+
+  const fileName = `course-content-${courseId}-${isDark ? "dark" : "light"}.html`;
+  const file = new File(Paths.cache, fileName);
 
   if (file.exists) {
     file.delete();

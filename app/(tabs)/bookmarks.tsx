@@ -7,6 +7,7 @@ import { CourseListCard } from "../../src/components/CourseListCard";
 import { EmptyState } from "../../src/components/common/EmptyState";
 import { LoadingState } from "../../src/components/common/LoadingState";
 import { LEGEND_LIST_PERF } from "../../src/constants/flatListConfig";
+import { useTheme } from "../../src/hooks/useTheme";
 import {
   useBookmarkedCourseIds,
   useBookmarkStore,
@@ -17,6 +18,7 @@ import type { CourseListItem } from "../../src/types/courseTypes";
 const keyExtractor = (item: CourseListItem) => String(item.id);
 
 export default function BookmarksScreen() {
+  const { colors } = useTheme();
   const hydrateBookmarks = useBookmarkStore((state) => state.hydrate);
   const bookmarks = useBookmarkStore((state) => state.bookmarks);
   const isHydrated = useBookmarkStore((state) => state.isHydrated);
@@ -56,10 +58,10 @@ export default function BookmarksScreen() {
       <EmptyState
         title="No bookmarked courses"
         subtitle="Start exploring courses and save your favorites."
-        icon={<Bookmark size={36} color="#94a3b8" />}
+        icon={<Bookmark size={36} color={colors.placeholder} />}
       />
     ),
-    []
+    [colors.placeholder]
   );
 
   if (!isHydrated) {
@@ -67,9 +69,20 @@ export default function BookmarksScreen() {
   }
 
   return (
-    <View className="flex-1 bg-canvas px-5 pt-4">
-      <Text className="mb-1 text-2xl font-bold text-ink">Saved Courses</Text>
-      <Text className="mb-5 text-sm text-muted">
+    <View
+      className="flex-1 px-5 pt-4"
+      style={{ backgroundColor: colors.background }}
+    >
+      <Text
+        className="mb-1 text-2xl font-bold"
+        style={{ color: colors.text }}
+      >
+        Saved Courses
+      </Text>
+      <Text
+        className="mb-5 text-sm"
+        style={{ color: colors.mutedText }}
+      >
         Bookmarks are stored on this device.
       </Text>
 

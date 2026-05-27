@@ -182,7 +182,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const user = currentUserResponse.data;
 
         console.log("restoreSession: Session restored successfully", {
-          userId: user.id,
+          userId: user._id,
           username: user.username,
         });
 

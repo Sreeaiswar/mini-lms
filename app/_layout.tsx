@@ -11,6 +11,7 @@ import {
 import { Stack } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -20,6 +21,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 import { AppToast } from "../src/components/common/AppToast";
 import { ErrorBoundary } from "../src/components/common/ErrorBoundary";
 import { OfflineBanner } from "../src/components/common/OfflineBanner";
+import { useTheme } from "../src/hooks/useTheme";
 import { usePreferencesStore } from "../src/store/preferencesStore";
 import {
   cancelReminder,
@@ -31,20 +33,37 @@ import { useAuthStore } from "../src/store/authStore";
 import { useNotificationStore } from "../src/store/notificationStore";
 
 function RootNavigator() {
+  const { colors } = useTheme();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isSessionRestored = useAuthStore((state) => state.isSessionRestored);
 
   if (!isSessionRestored) {
     return (
-      <View className="flex-1 items-center justify-center gap-4 bg-canvas">
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text className="text-base text-muted">Loading...</Text>
+      <View
+        className="flex-1 items-center justify-center gap-4"
+        style={{ backgroundColor: colors.background }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text
+          className="text-base"
+          style={{ color: colors.mutedText }}
+        >
+          Loading...
+        </Text>
       </View>
     );
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerStyle: { backgroundColor: colors.header },
+        headerTintColor: colors.headerText,
+        headerTitleStyle: { color: colors.headerText },
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    >
       <Stack.Screen name="index" />
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(tabs)" />
@@ -55,6 +74,10 @@ function RootNavigator() {
             headerShown: true,
             title: "Notifications",
             headerBackTitle: "Back",
+            headerStyle: { backgroundColor: colors.header },
+            headerTintColor: colors.headerText,
+            headerTitleStyle: { color: colors.headerText },
+            contentStyle: { backgroundColor: colors.background },
           }}
         />
       </Stack.Protected>
@@ -65,7 +88,8 @@ function RootNavigator() {
   );
 }
 
-export default function RootLayout() {
+function RootShell() {
+  const { isDark, colors } = useTheme();
   const appState = useRef(AppState.currentState);
   const isSessionRestored = useAuthStore((state) => state.isSessionRestored);
 
@@ -100,7 +124,6 @@ export default function RootLayout() {
     }
   }, [isSessionRestored]);
 
-
   useEffect(() => {
     void cancelReminder().then(() => scheduleReminder());
 
@@ -125,11 +148,20 @@ export default function RootLayout() {
   }, []);
 
   return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <OfflineBanner />
+      <RootNavigator />
+      <AppToast />
+    </View>
+  );
+}
+
+export default function RootLayout() {
+  return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <OfflineBanner />
-        <RootNavigator />
-        <AppToast />
+        <RootShell />
       </ErrorBoundary>
     </SafeAreaProvider>
   );
