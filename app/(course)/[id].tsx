@@ -51,11 +51,16 @@ export default function CourseDetailScreen() {
   const hydrateEnrollments = useEnrollmentStore((state) => state.hydrate);
   const hydrateProgress = useProgressStore((state) => state.hydrate);
   const enrollInCourse = useEnrollmentStore((state) => state.enroll);
-  const checkIsEnrolled = useEnrollmentStore((state) => state.isEnrolled);
-  const getEnrollmentByCourseId = useEnrollmentStore(
-    (state) => state.getEnrollmentByCourseId
+
+  // Subscribe to the actual data slices so this screen re-renders when progress
+  // updates from the learn screen / WebView / module-complete actions.
+  const enrollment = useEnrollmentStore((state) =>
+    state.enrollments.find((item) => item.course.id === courseId)
   );
-  const getProgress = useProgressStore((state) => state.getProgress);
+  const storedCourseProgress = useProgressStore(
+    (state) => state.progressByCourseId[String(courseId)]
+  );
+  const enrolled = enrollment != null;
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,7 +68,9 @@ export default function CourseDetailScreen() {
   const [isEnrolling, setIsEnrolling] = useState(false);
 
   const loadFromCacheOrEnrollment = useCallback(async (): Promise<boolean> => {
-    const storedEnrollment = getEnrollmentByCourseId(courseId);
+    const storedEnrollment = useEnrollmentStore
+      .getState()
+      .getEnrollmentByCourseId(courseId);
 
     if (storedEnrollment) {
       setCourse(storedEnrollment.course);
@@ -81,7 +88,7 @@ export default function CourseDetailScreen() {
     }
 
     return false;
-  }, [courseId, getEnrollmentByCourseId]);
+  }, [courseId]);
 
   const loadCourse = useCallback(async () => {
     if (!Number.isFinite(courseId)) {
@@ -147,7 +154,7 @@ export default function CourseDetailScreen() {
   }, [hydrateBookmarks, hydrateEnrollments, hydrateProgress, loadCourse]);
 
   const handleEnroll = useCallback(async () => {
-    if (isEnrolling || !course || checkIsEnrolled(course.id) || isOffline) {
+    if (isEnrolling || !course || enrolled || isOffline) {
       return;
     }
 
@@ -159,14 +166,7 @@ export default function CourseDetailScreen() {
     } finally {
       setIsEnrolling(false);
     }
-  }, [
-    checkIsEnrolled,
-    course,
-    enrollInCourse,
-    isEnrolling,
-    isOffline,
-    showToast,
-  ]);
+  }, [course, enrollInCourse, enrolled, isEnrolling, isOffline, showToast]);
 
   const handleToggleBookmark = useCallback(async () => {
     if (!course) {
@@ -251,10 +251,8 @@ export default function CourseDetailScreen() {
     );
   }
 
-  const enrolled = checkIsEnrolled(course.id);
-  const enrollment = getEnrollmentByCourseId(course.id);
   const progressPercent = enrolled
-    ? (enrollment?.progressPercent ?? getProgress(course.id))
+    ? (enrollment?.progressPercent ?? storedCourseProgress ?? 0)
     : 0;
   const enrollLabel = isEnrolling
     ? "Enrolling..."

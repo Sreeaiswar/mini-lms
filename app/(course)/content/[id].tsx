@@ -65,16 +65,20 @@ export default function CourseContentWebViewScreen() {
 
   const hydrateEnrollments = useEnrollmentStore((state) => state.hydrate);
   const hydrateProgress = useProgressStore((state) => state.hydrate);
-  const checkIsEnrolled = useEnrollmentStore((state) => state.isEnrolled);
-  const getEnrollmentByCourseId = useEnrollmentStore(
-    (state) => state.getEnrollmentByCourseId
-  );
   const syncCourseProgress = useEnrollmentStore(
     (state) => state.syncCourseProgress
   );
   const markLessonComplete = useProgressStore((state) => state.markLessonComplete);
   const isLessonComplete = useProgressStore((state) => state.isLessonComplete);
-  const getProgress = useProgressStore((state) => state.getProgress);
+
+  // Subscribe reactively so the WebView regenerates when progress changes.
+  const enrollment = useEnrollmentStore((state) =>
+    state.enrollments.find((item) => item.course.id === courseId)
+  );
+  const storedCourseProgress = useProgressStore(
+    (state) => state.progressByCourseId[String(courseId)]
+  );
+  const enrolled = enrollment != null;
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [isLoadingCourse, setIsLoadingCourse] = useState(true);
@@ -89,7 +93,9 @@ export default function CourseContentWebViewScreen() {
   const [isPreparingWebView, setIsPreparingWebView] = useState(false);
 
   const loadFromCacheOrEnrollment = useCallback(async (): Promise<boolean> => {
-    const storedEnrollment = getEnrollmentByCourseId(courseId);
+    const storedEnrollment = useEnrollmentStore
+      .getState()
+      .getEnrollmentByCourseId(courseId);
 
     if (storedEnrollment) {
       setCourse(storedEnrollment.course);
@@ -107,7 +113,7 @@ export default function CourseContentWebViewScreen() {
     }
 
     return false;
-  }, [courseId, getEnrollmentByCourseId]);
+  }, [courseId]);
 
   const loadCourse = useCallback(async () => {
     if (!Number.isFinite(courseId)) {
@@ -171,11 +177,9 @@ export default function CourseContentWebViewScreen() {
     void loadCourse();
   }, [hydrateEnrollments, hydrateProgress, loadCourse]);
 
-  const enrolled = course ? checkIsEnrolled(course.id) : false;
-  const enrollment = course ? getEnrollmentByCourseId(course.id) : undefined;
   const progressPercent = course
     ? enrolled
-      ? (enrollment?.progressPercent ?? getProgress(course.id))
+      ? (enrollment?.progressPercent ?? storedCourseProgress ?? 0)
       : 0
     : 0;
 
