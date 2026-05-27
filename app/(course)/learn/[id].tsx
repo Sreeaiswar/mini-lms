@@ -35,6 +35,7 @@ export default function CourseLearningScreen() {
   );
   const isEnrolled = useEnrollmentStore((state) => state.isEnrolled);
   const markLessonComplete = useProgressStore((state) => state.markLessonComplete);
+  const markModuleComplete = useProgressStore((state) => state.markModuleComplete);
   const isLessonComplete = useProgressStore((state) => state.isLessonComplete);
   const getProgress = useProgressStore((state) => state.getProgress);
   const storedProgress = useProgressStore(
@@ -45,6 +46,9 @@ export default function CourseLearningScreen() {
   const [modules, setModules] = useState<CourseModule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [completingLessonId, setCompletingLessonId] = useState<string | null>(
+    null
+  );
+  const [completingModuleId, setCompletingModuleId] = useState<string | null>(
     null
   );
 
@@ -94,6 +98,40 @@ export default function CourseLearningScreen() {
       courseId,
       isLessonComplete,
       markLessonComplete,
+      showToast,
+      syncCourseProgress,
+    ]
+  );
+
+  const handleMarkModuleComplete = useCallback(
+    async (courseModule: CourseModule) => {
+      if (completingModuleId) {
+        return;
+      }
+
+      const pendingLessonIds = courseModule.lessons
+        .map((lesson) => lesson.id)
+        .filter((lessonId) => !isLessonComplete(courseId, lessonId));
+
+      if (pendingLessonIds.length === 0) {
+        return;
+      }
+
+      setCompletingModuleId(courseModule.id);
+
+      try {
+        const newProgress = await markModuleComplete(courseId, pendingLessonIds);
+        await syncCourseProgress(courseId, newProgress);
+        showToast("Module completed", "success");
+      } finally {
+        setCompletingModuleId(null);
+      }
+    },
+    [
+      completingModuleId,
+      courseId,
+      isLessonComplete,
+      markModuleComplete,
       showToast,
       syncCourseProgress,
     ]
@@ -203,85 +241,157 @@ export default function CourseLearningScreen() {
         </View>
 
         <View className={cn(isLandscape && "flex-row flex-wrap gap-3")}>
-          {modules.map((module) => (
-            <View
-              key={module.id}
-              className={cn(
-                "mb-4 rounded-xl border p-4",
-                isLandscape && "mb-0 min-w-[48%] max-w-[49%] flex-1"
-              )}
-              style={{
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-              }}
-            >
-              <Text
-                className="mb-3 text-[17px] font-bold"
-                style={{ color: colors.text }}
-              >
-                {module.title}
-              </Text>
-              {module.lessons.map((lesson) => {
-                const completed = isLessonComplete(courseId, lesson.id);
-                const isCompleting = completingLessonId === lesson.id;
+          {modules.map((module) => {
+            const totalLessons = module.lessons.length;
+            const completedLessons = module.lessons.filter((lesson) =>
+              isLessonComplete(courseId, lesson.id)
+            ).length;
+            const moduleCompleted =
+              totalLessons > 0 && completedLessons === totalLessons;
+            const isCompletingModule = completingModuleId === module.id;
 
-                return (
-                  <View
-                    key={lesson.id}
-                    className="flex-row items-center justify-between gap-3 border-t py-2.5"
-                    style={{ borderColor: colors.border }}
+            return (
+              <View
+                key={module.id}
+                className={cn(
+                  "mb-4 rounded-xl border p-4",
+                  isLandscape && "mb-0 min-w-[48%] max-w-[49%] flex-1"
+                )}
+                style={{
+                  backgroundColor: colors.card,
+                  borderColor: moduleCompleted ? colors.success : colors.border,
+                }}
+              >
+                <View className="mb-3 flex-row items-start justify-between gap-2">
+                  <Text
+                    className="flex-1 text-[17px] font-bold"
+                    style={{ color: colors.text }}
                   >
-                    <View className="flex-1 flex-row items-center gap-2.5">
-                      {completed ? (
-                        <CheckCircle2 size={20} color={colors.success} />
-                      ) : (
-                        <Circle size={20} color={colors.placeholder} />
-                      )}
+                    {module.title}
+                  </Text>
+                  {moduleCompleted ? (
+                    <View
+                      className="flex-row items-center gap-1 rounded-md px-2 py-1"
+                      style={{ backgroundColor: colors.successBg }}
+                    >
+                      <CheckCircle2 size={14} color={colors.success} />
                       <Text
-                        className={cn(
-                          "flex-1 text-sm font-semibold",
-                          completed && "line-through"
-                        )}
-                        style={{
-                          color: completed
-                            ? colors.mutedText
-                            : colors.secondaryText,
-                        }}
+                        className="text-[11px] font-bold"
+                        style={{ color: colors.successText }}
                       >
-                        {lesson.title}
+                        Completed
                       </Text>
                     </View>
-                    <Pressable
-                      className="min-w-[118px] items-center rounded-lg px-3 py-2"
-                      style={({ pressed }) => ({
-                        backgroundColor: completed
-                          ? colors.success
-                          : pressed
-                            ? colors.primaryDark
-                            : colors.primary,
-                      })}
-                      onPress={() => void handleMarkLessonComplete(lesson.id)}
-                      disabled={completed || isCompleting}
+                  ) : (
+                    <Text
+                      className="text-xs font-semibold"
+                      style={{ color: colors.mutedText }}
                     >
-                      {isCompleting ? (
-                        <ActivityIndicator
-                          color={colors.onPrimary}
-                          size="small"
-                        />
-                      ) : (
+                      {completedLessons}/{totalLessons}
+                    </Text>
+                  )}
+                </View>
+
+                {module.lessons.map((lesson) => {
+                  const completed = isLessonComplete(courseId, lesson.id);
+                  const isCompleting = completingLessonId === lesson.id;
+
+                  return (
+                    <View
+                      key={lesson.id}
+                      className="flex-row items-center justify-between gap-3 border-t py-2.5"
+                      style={{ borderColor: colors.border }}
+                    >
+                      <View className="flex-1 flex-row items-center gap-2.5">
+                        {completed ? (
+                          <CheckCircle2 size={20} color={colors.success} />
+                        ) : (
+                          <Circle size={20} color={colors.placeholder} />
+                        )}
                         <Text
-                          className="text-xs font-bold"
-                          style={{ color: colors.onPrimary }}
+                          className={cn(
+                            "flex-1 text-sm font-semibold",
+                            completed && "line-through"
+                          )}
+                          style={{
+                            color: completed
+                              ? colors.mutedText
+                              : colors.secondaryText,
+                          }}
                         >
-                          {completed ? "Completed" : "Mark Complete"}
+                          {lesson.title}
                         </Text>
-                      )}
-                    </Pressable>
-                  </View>
-                );
-              })}
-            </View>
-          ))}
+                      </View>
+                      <Pressable
+                        className="min-w-[118px] items-center rounded-lg px-3 py-2"
+                        style={({ pressed }) => ({
+                          backgroundColor: completed
+                            ? colors.success
+                            : pressed
+                              ? colors.primaryDark
+                              : colors.primary,
+                        })}
+                        onPress={() => void handleMarkLessonComplete(lesson.id)}
+                        disabled={completed || isCompleting}
+                      >
+                        {isCompleting ? (
+                          <ActivityIndicator
+                            color={colors.onPrimary}
+                            size="small"
+                          />
+                        ) : (
+                          <Text
+                            className="text-xs font-bold"
+                            style={{ color: colors.onPrimary }}
+                          >
+                            {completed ? "Completed" : "Mark Complete"}
+                          </Text>
+                        )}
+                      </Pressable>
+                    </View>
+                  );
+                })}
+
+                <Pressable
+                  className="mt-4 items-center justify-center rounded-lg py-3"
+                  style={({ pressed }) => ({
+                    backgroundColor: moduleCompleted
+                      ? colors.successBg
+                      : pressed
+                        ? colors.primaryDark
+                        : colors.primary,
+                    borderWidth: moduleCompleted ? 1 : 0,
+                    borderColor: colors.success,
+                  })}
+                  onPress={() => void handleMarkModuleComplete(module)}
+                  disabled={moduleCompleted || isCompletingModule}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    moduleCompleted
+                      ? `${module.title} completed`
+                      : `Mark ${module.title} as complete`
+                  }
+                >
+                  {isCompletingModule ? (
+                    <ActivityIndicator color={colors.onPrimary} />
+                  ) : (
+                    <Text
+                      className="text-sm font-bold"
+                      style={{
+                        color: moduleCompleted
+                          ? colors.successText
+                          : colors.onPrimary,
+                      }}
+                    >
+                      {moduleCompleted
+                        ? "Module Completed ✓"
+                        : "Mark Module as Complete"}
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+            );
+          })}
         </View>
       </ScrollView>
     </>

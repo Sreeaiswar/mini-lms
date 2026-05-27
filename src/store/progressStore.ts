@@ -21,6 +21,10 @@ interface ProgressState {
   getProgress: (courseId: number) => number;
   isLessonComplete: (courseId: number, lessonId: string) => boolean;
   markLessonComplete: (courseId: number, lessonId: string) => Promise<number>;
+  markModuleComplete: (
+    courseId: number,
+    lessonIds: string[]
+  ) => Promise<number>;
   initCourseProgress: (courseId: number) => Promise<void>;
   clearProgress: () => Promise<void>;
 }
@@ -123,6 +127,35 @@ export const useProgressStore = create<ProgressState>((set, get) => ({
     }
 
     const completedLessonIds = [...existing, lessonId];
+    const progressPercent = computeProgressPercent(completedLessonIds, modules);
+
+    const progressByCourseId = {
+      ...get().progressByCourseId,
+      [key]: progressPercent,
+    };
+    const completedLessonsByCourseId = {
+      ...get().completedLessonsByCourseId,
+      [key]: completedLessonIds,
+    };
+
+    await persistProgress(progressByCourseId, completedLessonsByCourseId);
+    set({ progressByCourseId, completedLessonsByCourseId });
+
+    return progressPercent;
+  },
+
+  markModuleComplete: async (courseId, lessonIds) => {
+    const key = String(courseId);
+    const modules = getCourseContent(courseId);
+    const existing = get().completedLessonsByCourseId[key] ?? [];
+    const existingSet = new Set(existing);
+    const additions = lessonIds.filter((id) => !existingSet.has(id));
+
+    if (additions.length === 0) {
+      return get().progressByCourseId[key] ?? 0;
+    }
+
+    const completedLessonIds = [...existing, ...additions];
     const progressPercent = computeProgressPercent(completedLessonIds, modules);
 
     const progressByCourseId = {
