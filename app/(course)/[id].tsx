@@ -402,12 +402,14 @@ export default function CourseDetailScreen() {
 
         <Pressable
           className="mb-4 items-center rounded-xl py-3.5"
-          style={{ backgroundColor: isDark ? "#8B5CF6" : "#7c3aed" }}
+          style={({ pressed }) => ({
+            backgroundColor: pressed ? colors.accentDark : colors.accent,
+          })}
           onPress={handleOpenCourseContent}
         >
           <Text
             className="text-base font-bold"
-            style={{ color: colors.onPrimary }}
+            style={{ color: colors.onAccent }}
           >
             Open Course Content
           </Text>
@@ -449,7 +451,7 @@ export default function CourseDetailScreen() {
             <Pressable
               className="mt-3 items-center rounded-xl py-3.5"
               style={{
-                backgroundColor: isDark ? colors.card : colors.text,
+                backgroundColor: colors.buttonOnDarkBg,
                 borderWidth: isDark ? 1 : 0,
                 borderColor: colors.border,
               }}
@@ -457,7 +459,7 @@ export default function CourseDetailScreen() {
             >
               <Text
                 className="text-base font-bold"
-                style={{ color: isDark ? colors.text : "#ffffff" }}
+                style={{ color: colors.buttonOnDarkText }}
               >
                 {progressPercent >= 100
                   ? "Review Course Content"

@@ -45,7 +45,7 @@ const DEFAULT_AVATAR = "https://via.placeholder.com/200x200.png";
 
 export default function ProfileScreen() {
   const { contentPadding, maxContentWidth, isLandscape } = useResponsiveLayout();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const uploadAvatar = useAuthStore((state) => state.uploadAvatar);
@@ -366,7 +366,7 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            <TrendingUp size={22} color={isDark ? "#A78BFA" : "#7c3aed"} />
+            <TrendingUp size={22} color={colors.accent} />
             <Text
               className="text-2xl font-bold"
               style={{ color: colors.text }}
