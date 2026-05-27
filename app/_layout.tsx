@@ -100,9 +100,6 @@ export default function RootLayout() {
     }
   }, [isSessionRestored]);
 
-  useEffect(() => {
-    void requestPermissions();
-  }, []);
 
   useEffect(() => {
     void cancelReminder().then(() => scheduleReminder());

@@ -11,6 +11,7 @@ import { useResponsiveLayout } from "../../src/hooks/useResponsiveLayout";
 import { router } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BookOpen, GraduationCap, TrendingUp } from "lucide-react-native";
 
 import { CourseListCard } from "../../src/components/CourseListCard";
@@ -39,6 +40,7 @@ import { shadows } from "../../src/styles/ui";
 import { cn } from "../../src/utils/cn";
 
 const DEFAULT_AVATAR = "https://via.placeholder.com/200x200.png";
+const CACHED_AVATAR_KEY = "@mini_lms_cached_avatar_url";
 
 export default function ProfileScreen() {
   const { contentPadding, maxContentWidth, isLandscape } = useResponsiveLayout();
@@ -78,6 +80,7 @@ export default function ProfileScreen() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [cachedAvatarUrl, setCachedAvatarUrl] = useState<string>(DEFAULT_AVATAR);
 
   const loadProfileData = useCallback(async () => {
     setLoadError(null);
@@ -92,6 +95,29 @@ export default function ProfileScreen() {
       setLoadError("Could not load your profile. Please try again.");
     }
   }, [hydrateBookmarks, hydrateEnrollments, hydrateProgress, refreshCurrentUser]);
+
+  useEffect(() => {
+    async function restoreCachedAvatar() {
+      try {
+        const cached = await AsyncStorage.getItem(CACHED_AVATAR_KEY);
+        if (cached) {
+          setCachedAvatarUrl(cached);
+        }
+      } catch (error) {
+        console.error("Failed to restore cached avatar:", error);
+      }
+    }
+    void restoreCachedAvatar();
+  }, []);
+
+  useEffect(() => {
+    if (user?.avatar?.url && user.avatar.url !== cachedAvatarUrl) {
+      void AsyncStorage.setItem(CACHED_AVATAR_KEY, user.avatar.url).catch(
+        (error) => console.error("Failed to cache avatar:", error)
+      );
+      setCachedAvatarUrl(user.avatar.url);
+    }
+  }, [user?.avatar?.url, cachedAvatarUrl]);
 
   const handleRefresh = useCallback(async () => {
     if (isOffline) {
@@ -123,7 +149,7 @@ export default function ProfileScreen() {
     void loadProfileData();
   }, [loadProfileData]);
 
-  const avatarUrl = user?.avatar?.url ?? DEFAULT_AVATAR;
+  const avatarUrl = user?.avatar?.url ?? cachedAvatarUrl;
 
   const handleChangeProfilePicture = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();

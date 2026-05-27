@@ -5,6 +5,8 @@ import {
   Pressable,
   ScrollView,
   Text,
+  TouchableWithoutFeedback,
+  Keyboard,
   View,
 } from "react-native";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -63,98 +65,103 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 justify-center bg-canvas px-6"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      className="flex-1 bg-canvas"
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="mb-6 items-center">
-          <Image
-            source={require("../../assets/Logo.png")}
-            style={{ width: 140, height: 140 }}
-            contentFit="contain"
-            accessibilityLabel="Mini LMS logo"
-          />
-        </View>
-
-        <Text className="mb-2 text-[28px] font-bold text-ink">Create account</Text>
-        <Text className="mb-8 text-[15px] text-muted">
-          Join Mini LMS to start learning
-        </Text>
-
-        <FormTextField
-          control={control}
-          name="username"
-          label="Username"
-          placeholder="Choose a username"
-          autoCapitalize="none"
-          autoCorrect={false}
-          editable={!isLoading}
-        />
-
-        <FormTextField
-          control={control}
-          name="email"
-          label="Email"
-          placeholder="you@example.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          editable={!isLoading}
-        />
-
-        <FormTextField
-          control={control}
-          name="password"
-          label="Password"
-          placeholder="Create a password"
-          secureTextEntry
-          autoCapitalize="none"
-          editable={!isLoading}
-        />
-
-        <FormTextField
-          control={control}
-          name="confirmPassword"
-          label="Confirm password"
-          placeholder="Re-enter your password"
-          secureTextEntry
-          autoCapitalize="none"
-          editable={!isLoading}
-        />
-
-        {errors.root?.message ? (
-          <Text className="mb-3 text-sm text-red-500">{errors.root.message}</Text>
-        ) : null}
-
-        <Pressable
-          className={cn(
-            "mt-2 items-center rounded-control bg-brand py-[14px]",
-            isLoading && "opacity-70"
-          )}
-          onPress={() => void onSubmit()}
-          disabled={isLoading}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingBottom: 20 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={true}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <Text className="text-base font-semibold text-white">Register</Text>
-          )}
-        </Pressable>
+          <View className="px-6">
+            <View className="mb-6 items-center">
+              <Image
+                source={require("../../assets/Logo.png")}
+                style={{ width: 140, height: 140 }}
+                contentFit="contain"
+                accessibilityLabel="Mini LMS logo"
+              />
+            </View>
 
-        <Pressable
-          className="mt-5 items-center"
-          onPress={() => router.replace("/(auth)/login")}
-          disabled={isLoading}
-        >
-          <Text className="text-[15px] font-semibold text-brand">
-            Already have an account? Login
-          </Text>
-        </Pressable>
-      </ScrollView>
+            <Text className="mb-2 text-[28px] font-bold text-ink">Create account</Text>
+            <Text className="mb-8 text-[15px] text-muted">
+              Join Mini LMS to start learning
+            </Text>
+
+            <FormTextField
+              control={control}
+              name="username"
+              label="Username"
+              placeholder="Choose a username"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isLoading}
+            />
+
+            <FormTextField
+              control={control}
+              name="email"
+              label="Email"
+              placeholder="you@example.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isLoading}
+            />
+
+            <FormTextField
+              control={control}
+              name="password"
+              label="Password"
+              placeholder="Create a password"
+              secureTextEntry
+              autoCapitalize="none"
+              editable={!isLoading}
+            />
+
+            <FormTextField
+              control={control}
+              name="confirmPassword"
+              label="Confirm password"
+              placeholder="Re-enter your password"
+              secureTextEntry
+              autoCapitalize="none"
+              editable={!isLoading}
+            />
+
+            {errors.root?.message ? (
+              <Text className="mb-3 text-sm text-red-500">{errors.root.message}</Text>
+            ) : null}
+
+            <Pressable
+              className={cn(
+                "mt-2 items-center rounded-control bg-brand py-[14px]",
+                isLoading && "opacity-70"
+              )}
+              onPress={() => void onSubmit()}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text className="text-base font-semibold text-white">Register</Text>
+              )}
+            </Pressable>
+
+            <Pressable
+              className="mt-5 items-center"
+              onPress={() => router.replace("/(auth)/login")}
+              disabled={isLoading}
+            >
+              <Text className="text-[15px] font-semibold text-brand">
+                Already have an account? Login
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }

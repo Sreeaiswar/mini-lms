@@ -151,12 +151,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       let storedRefreshToken: string | null = null;
 
       try {
+        console.log("restoreSession: Starting session restoration");
+
         [storedAccessToken, storedRefreshToken] = await Promise.all([
           secureStore.getAccessToken(),
           secureStore.getRefreshToken(),
         ]);
 
+        console.log("restoreSession: Retrieved tokens", {
+          hasAccessToken: !!storedAccessToken,
+          hasRefreshToken: !!storedRefreshToken,
+        });
+
         if (!storedAccessToken) {
+          console.log("restoreSession: No access token found, clearing if refresh exists");
           if (storedRefreshToken) {
             await secureStore.clear();
           }
@@ -173,6 +181,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const currentUserResponse = await authApi.getCurrentUser();
         const user = currentUserResponse.data;
 
+        console.log("restoreSession: Session restored successfully", {
+          userId: user.id,
+          username: user.username,
+        });
+
         set({
           ...authenticatedState(
             user,
@@ -187,11 +200,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           : undefined;
 
         if (status === 401 || status === 403 || !storedAccessToken) {
+          console.log("restoreSession: Clearing session due to auth error", {
+            status,
+          });
           await secureStore.clear();
           setRestoredUnauthenticated(set);
           return;
         }
 
+        console.error("restoreSession: Unexpected error during restoration", {
+          status,
+          message: error instanceof Error ? error.message : String(error),
+          hasAccessToken: !!storedAccessToken,
+        });
+
+        console.log("restoreSession: Keeping tokens despite error");
         set({
           accessToken: storedAccessToken,
           refreshToken: storedRefreshToken,

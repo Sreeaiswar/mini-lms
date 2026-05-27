@@ -179,8 +179,16 @@ export default function CourseContentWebViewScreen() {
 
   const webViewPayload: CourseWebViewPayload | null = useMemo(() => {
     if (!course) {
+      console.log("WebViewPayload: course is null");
       return null;
     }
+
+    console.log("WebViewPayload: Building payload", {
+      courseId: course.id,
+      title: course.title,
+      enrolled,
+      progressPercent,
+    });
 
     return {
       title: course.title,
@@ -194,6 +202,10 @@ export default function CourseContentWebViewScreen() {
 
   useEffect(() => {
     if (!webViewPayload || !Number.isFinite(courseId)) {
+      console.log("WebViewSource: Skipping preparation", {
+        hasPayload: !!webViewPayload,
+        courseId: isFinite(courseId) ? courseId : "invalid",
+      });
       setWebViewSource(null);
       return;
     }
@@ -201,14 +213,21 @@ export default function CourseContentWebViewScreen() {
     let cancelled = false;
     setIsPreparingWebView(true);
 
+    console.log("WebViewSource: Starting preparation for course", { courseId });
+
     void prepareWebViewSource(courseId, webViewPayload)
       .then((source) => {
         if (!cancelled) {
+          console.log("WebViewSource: Preparation successful", { courseId });
           setWebViewSource(source);
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (!cancelled) {
+          console.error("WebViewSource: Preparation failed", {
+            courseId,
+            error: error instanceof Error ? error.message : String(error),
+          });
           setWebViewError("Failed to prepare course content.");
           setWebViewSource(null);
         }
