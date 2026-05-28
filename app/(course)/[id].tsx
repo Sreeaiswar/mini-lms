@@ -260,6 +260,9 @@ export default function CourseDetailScreen() {
       ? "Enrolled ✓"
       : "Enroll";
 
+  // Black in light mode, white in dark mode
+  const buttonTextColor = isDark ? "#ffffff" : "#000000";
+
   return (
     <>
       <Stack.Screen
@@ -400,24 +403,23 @@ export default function CourseDetailScreen() {
           </View>
         </View>
 
-        {/* Open Course Content — same colors as Enroll button */}
+        {/* Open Course Content button — black text in light, white in dark */}
         <Pressable
-          className="mb-4 min-h-[52px] items-center justify-center rounded-xl py-3.5"
+          className="mb-4 items-center rounded-xl py-3.5"
           style={({ pressed }) => ({
-            backgroundColor: pressed
-              ? colors.primaryDark
-              : colors.primary,
+            backgroundColor: pressed ? colors.accentDark : colors.accent,
           })}
           onPress={handleOpenCourseContent}
         >
           <Text
-            className="text-[17px] font-bold"
-            style={{ color: colors.onPrimary }}
+            className="text-base font-bold"
+            style={{ color: buttonTextColor }}
           >
             Open Course Content
           </Text>
         </Pressable>
 
+        {/* Enroll button — black text in light, white in dark */}
         <Pressable
           className={cn(
             "min-h-[52px] items-center justify-center rounded-xl py-4",
@@ -438,7 +440,7 @@ export default function CourseDetailScreen() {
           ) : (
             <Text
               className="text-[17px] font-bold"
-              style={{ color: colors.onPrimary }}
+              style={{ color: buttonTextColor }}
             >
               {enrollLabel}
             </Text>
