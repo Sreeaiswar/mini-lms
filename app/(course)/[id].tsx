@@ -400,16 +400,19 @@ export default function CourseDetailScreen() {
           </View>
         </View>
 
+        {/* Open Course Content — same colors as Enroll button */}
         <Pressable
-          className="mb-4 items-center rounded-xl py-3.5"
+          className="mb-4 min-h-[52px] items-center justify-center rounded-xl py-3.5"
           style={({ pressed }) => ({
-            backgroundColor: pressed ? colors.accentDark : colors.accent,
+            backgroundColor: pressed
+              ? colors.primaryDark
+              : colors.primary,
           })}
           onPress={handleOpenCourseContent}
         >
           <Text
-            className="text-base font-bold"
-            style={{ color: colors.onAccent }}
+            className="text-[17px] font-bold"
+            style={{ color: colors.onPrimary }}
           >
             Open Course Content
           </Text>
@@ -435,7 +438,7 @@ export default function CourseDetailScreen() {
           ) : (
             <Text
               className="text-[17px] font-bold"
-              style={{ color: colors.primary }}
+              style={{ color: colors.onPrimary }}
             >
               {enrollLabel}
             </Text>
